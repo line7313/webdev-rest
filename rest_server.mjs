@@ -58,9 +58,17 @@ function dbRun(query, params) {
  ********************************************************************/
 // GET request handler for crime codes
 app.get('/codes', (req, res) => {
-    console.log(req.query); // query object (key-value pairs after the ? in the url)
-    
-    res.status(200).type('json').send({}); // <-- you will need to change this
+    let query = 'SELECT * FROM Codes WHERE code = ? AND incident_type = ?';
+    dbSelect(query, ['100', 'HOMICIDE'])
+    .then((data) => {
+        data.forEach((line) => {
+            line["type"] = line["incident_type"];
+            delete line["incident_type"]; 
+        });
+        res.status(200).type('json').send(data); // <-- you will need to change this
+    });
+
+    console.log(req.query); // query object (key-value pairs after the ? in the url
 });
 
 // GET request handler for neighborhoods

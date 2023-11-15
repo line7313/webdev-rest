@@ -1,5 +1,6 @@
 # Database directory
 db/
+package-lock.json
 
 # Logs
 logs
