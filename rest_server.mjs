@@ -30,7 +30,6 @@ function dbSelect(query, params) {
     return new Promise((resolve, reject) => {
         db.all(query, params, (err, rows) => {
             if (err) {
-                console.log(err);
                 reject(err);
             }
             else {
@@ -59,16 +58,6 @@ function dbRun(query, params) {
  ********************************************************************/
 // GET request handler for crime codes
 app.get('/codes', (req, res) => {
-
-    let query = 'SELECT * FROM Codes';
-    let queryPromise = dbSelect(query, [])
-    .then((data) => {
-        data.forEach((line) => {
-            line["type"] = line["incident_type"];
-            delete line["incident_type"]; 
-            console.log(line);
-        })
-    })
     console.log(req.query); // query object (key-value pairs after the ? in the url)
     
     res.status(200).type('json').send({}); // <-- you will need to change this
