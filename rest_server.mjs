@@ -53,17 +53,22 @@ function dbRun(query, params) {
     });
 }
 
+function jsonReplace(line, originalKey, replacementKey) {
+    line[replacementKey] = line[originalKey];
+    delete line[originalKey];
+    return line; 
+}
+
 /********************************************************************
  ***   REST REQUEST HANDLERS                                      *** 
  ********************************************************************/
 // GET request handler for crime codes
 app.get('/codes', (req, res) => {
-    let query = 'SELECT * FROM Codes WHERE code = ? AND incident_type = ?';
-    dbSelect(query, ['100', 'HOMICIDE'])
+    let query = 'SELECT * FROM Codes';
+    dbSelect(query, [])
     .then((data) => {
         data.forEach((line) => {
-            line["type"] = line["incident_type"];
-            delete line["incident_type"]; 
+            line = jsonReplace(line, "incident_type", "type");
         });
         res.status(200).type('json').send(data); // <-- you will need to change this
     });
@@ -73,17 +78,44 @@ app.get('/codes', (req, res) => {
 
 // GET request handler for neighborhoods
 app.get('/neighborhoods', (req, res) => {
+    let query = 'SELECT * FROM Neighborhoods ORDER BY neighborhood_number';
+    dbSelect(query, [])
+    .then((data) => {
+        data.forEach((line) => {
+            line = jsonReplace(line, "neighborhood_number", "id");
+            line = jsonReplace(line, "neighborhood_name", "name");
+        });
+        res.status(200).type('json').send(data); // <-- you will need to change this
+    });
     console.log(req.query); // query object (key-value pairs after the ? in the url)
     
-    res.status(200).type('json').send({}); // <-- you will need to change this
 });
 
 // GET request handler for crime incidents
 app.get('/incidents', (req, res) => {
+    let query = 'SELECT * FROM Incidents ORDER BY date_time DESC LIMIT 1000';
+    dbSelect(query, [])
+    .then((data) => {
+        data.forEach((line) => {
+            let dateTimeParsed = line.date_time.split("T");
+            let date = dateTimeParsed[0];
+            let time = dateTimeParsed[1];
+            line = {
+                "case_number": line.case_number,
+                "date": date,
+                "time": time,
+                "code": line.code,
+                "incident": line.incident,
+                "police_grid": line.police_grid,
+                "neighborhood_number": line.neighborhood_number,
+                "block": line.block
+            };
+            console.log(line);
+        });
+        res.status(200).type('json').send(data); // <-- you will need to change this
+    });
     console.log(req.query); // query object (key-value pairs after the ? in the url)
-    
-    res.status(200).type('json').send({}); // <-- you will need to change this
-});
+    });
 
 // PUT request handler for new crime incident
 app.put('/new-incident', (req, res) => {
