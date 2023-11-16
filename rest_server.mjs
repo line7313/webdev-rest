@@ -126,9 +126,29 @@ app.put('/new-incident', (req, res) => {
 
 // DELETE request handler for new crime incident
 app.delete('/remove-incident', (req, res) => {
-    console.log(req.body); // uploaded data
-    
-    res.status(200).type('txt').send('OK'); // <-- you may need to change this
+    const incidentExist = 'SELECT * FROM incidents WHERE case_number = ?';
+    const deleteQuery = 'DELETE FROM Incidents WHERE case_number = ?';
+    const params = [parseInt(req.query.case_number)];
+
+    dbSelect(incidentExist, params)
+        .then((rows) => {
+            if (rows.length > 0) {
+                return dbRun(deleteQuery, params);
+            } else {
+                // Record not found
+                throw new Error("Record not found");
+            }
+        })
+        .then(() => {
+          
+            console.log(`${params} has been deleted`);
+            res.status(200).type('txt').send(`Case number ${params} has been deleted successfully`);
+        })
+        .catch((error) => {
+            // Handle errors
+            //console.log( error);
+            res.status(500).type('txt').send("Id cannot be found");
+        });
 });
 
 /********************************************************************
