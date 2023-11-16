@@ -1,8 +1,9 @@
 import * as path from 'node:path';
 import * as url from 'node:url';
 
-import { default as express } from 'express';
+import { default as express, query } from 'express';
 import { default as sqlite3 } from 'sqlite3';
+import { isStringObject } from 'node:util/types';
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const db_filename = path.join(__dirname, 'db', 'stpaul_crime.sqlite3');
@@ -216,9 +217,20 @@ app.get('/incidents', (req, res) => {
 
 // PUT request handler for new crime incident
 app.put('/new-incident', (req, res) => {
-    console.log(req.body); // uploaded data
+    const data = req.body    
+    let newIncident = []
     
-    res.status(200).type('txt').send('OK'); // <-- you may need to change this
+    Object.values(data).forEach((item) => {
+        typeof(item) == "string" ? newIncident.push(`"${item}"`) : newIncident.push(item)
+    });
+    const query = "INSERT INTO Incidents VALUES (" + newIncident + ");"
+
+    const p = dbSelect(query, [])
+    p.then((data, err) => {
+        res.status(200).type('txt').send("Successfully added data to DB"); 
+    }).catch((err) => {
+        res.status(500).type('txt').send(err);
+    })
 });
 
 // DELETE request handler for new crime incident
