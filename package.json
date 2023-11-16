@@ -3,12 +3,16 @@
     "description": "REST Server",
     "version": "1.0.0",
     "author": {
-        "name": "",
-        "email": ""
+        "name": "Jackson",
+        "email": "line7313@stthomas.edu"
     },
     "contributors": [
+        "Prince",
+        "Alec"
     ],
-    "repository": {},
+    "repository": {
+        "url": "https://github.com/line7313/webdev-rest"
+    },
     "dependencies": {
         "express": "^4.18.2",
         "sqlite3": "^5.1.6"

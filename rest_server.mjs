@@ -64,43 +64,139 @@ function jsonReplace(line, originalKey, replacementKey) {
  ********************************************************************/
 // GET request handler for crime codes
 app.get('/codes', (req, res) => {
+    let queryParams = req.query;
     let query = 'SELECT * FROM Codes';
-    dbSelect(query, [])
+    let params = [];
+
+    if (queryParams.hasOwnProperty("code")) {
+        let codes = queryParams.code.split(",");
+        query = 'SELECT * FROM Codes WHERE ';
+
+        codes.forEach((code) => {
+            codes[codes.length - 1] != code ? query += "code = ? OR " : query += "code = ?"; // Construct query string
+            params.push(code);
+        });
+    }
+
+    dbSelect(query, params)
     .then((data) => {
         data.forEach((line) => {
-            line = jsonReplace(line, "incident_type", "type");
+            line = jsonReplace(line, "incident_type", "type"); // Rename key
         });
-        res.status(200).type('json').send(data); // <-- you will need to change this
+        res.status(200).type('json').send(data);
     });
-
-    console.log(req.query); // query object (key-value pairs after the ? in the url
 });
 
 // GET request handler for neighborhoods
 app.get('/neighborhoods', (req, res) => {
+    let queryParams = req.query;
     let query = 'SELECT * FROM Neighborhoods ORDER BY neighborhood_number';
-    dbSelect(query, [])
+    let params = [];
+
+    if (queryParams.hasOwnProperty("id")) {
+        let ids = queryParams.id.split(",");
+        query = 'SELECT * FROM Neighborhoods WHERE ';
+
+        ids.forEach((id) => {
+            ids[ids.length - 1] != id ? query += "neighborhood_number = ? OR " : query += "neighborhood_number = ?"; // Construct query string
+            params.push(id);
+        });
+    }
+
+    query += "ORDER BY neighborhood_number";    
+
+    dbSelect(query, params)
     .then((data) => {
         data.forEach((line) => {
-            line = jsonReplace(line, "neighborhood_number", "id");
+            line = jsonReplace(line, "neighborhood_number", "id"); // Rename keys
             line = jsonReplace(line, "neighborhood_name", "name");
         });
-        res.status(200).type('json').send(data); // <-- you will need to change this
-    });
-    console.log(req.query); // query object (key-value pairs after the ? in the url)
-    
+        res.status(200).type('json').send(data);
+    });   
 });
 
 // GET request handler for crime incidents
-app.get('/incidents', (req, res) => {
-    let query = 'SELECT * FROM Incidents ORDER BY date_time DESC LIMIT 1000';
-    dbSelect(query, [])
+app.get('/incidents', (req, res) => {    
+    let queryParams = req.query;
+    let query = 'SELECT * FROM Incidents ';
+    let params = [];
+    let constructedParams = [];
+    let limit = 1000;
+
+    if (queryParams.hasOwnProperty("limit")) {
+        limit = queryParams.limit;
+    }
+
+
+    if (queryParams.hasOwnProperty("code")) {
+        let codes = queryParams.code.split(",");
+        let constructedParam = "( ";
+
+        codes.forEach((code) => {
+            codes[codes.length - 1] != code ? constructedParam += "code = ? OR " : constructedParam += "code = ? )"; // Construct query string
+            constructedParams.push(constructedParam);
+            params.push(code);
+        });
+    }
+
+    if (queryParams.hasOwnProperty("end_date")) {
+        constructedParam = 'date_time <= ' + queryParams.date;
+        constructedParams.push(constructedParam);
+    }  
+
+
+    if (queryParams.hasOwnProperty("start_date")) {
+        constructedParam = 'date_time >= ' + queryParams.date;
+        constructedParams.push(constructedParam);
+    }  
+
+    if (queryParams.hasOwnProperty("grid")) {
+        let grids = queryParams.grid.split(",");
+        let constructedParam = "( ";
+
+        grids.forEach((grid) => {
+            grids[grids.length - 1] != grid ? constructedParam += "police_grid = ? OR " : constructedParam += "police_grid = ? )"; // Construct query string
+            params.push(grid);
+        });
+
+        constructedParams.push(constructedParam);
+    }
+
+    if (queryParams.hasOwnProperty("neighborhood")) {
+        let neighborhoods = queryParams.neighborhood.split(",");
+        let constructedParam = "( ";
+
+        neighborhoods.forEach((neighborhood) => {
+            neighborhoods[neighborhoods.length - 1] != neighborhood ? constructedParam += "neighborhood_number = ? OR " : constructedParam += "neighborhood_number = ? )"; // Construct query string
+            params.push(neighborhood);
+        });
+
+        constructedParams.push(constructedParam);
+    }
+
+
+    if ( constructedParams.length > 0 ) {
+        query += "WHERE ";
+
+        constructedParams.forEach((constructedParam) => {
+            query += constructedParam;
+            if ( constructedParams[constructedParams.length - 1] != constructedParam ) {
+                query += " AND ";
+            }
+        });
+    } 
+    query += " ORDER BY date_time DESC LIMIT " + limit;
+
+
+
+    dbSelect(query, params)
     .then((data) => {
+        let returnObject = [];
         data.forEach((line) => {
-            let dateTimeParsed = line.date_time.split("T");
+            let dateTimeParsed = line.date_time.split("T"); // Seperate date and time
             let date = dateTimeParsed[0];
             let time = dateTimeParsed[1];
-            line = {
+            let incident = { // Map to new indcident object
                 "case_number": line.case_number,
                 "date": date,
                 "time": time,
@@ -110,11 +206,12 @@ app.get('/incidents', (req, res) => {
                 "neighborhood_number": line.neighborhood_number,
                 "block": line.block
             };
-            console.log(line);
+
+            returnObject.push(incident); 
         });
-        res.status(200).type('json').send(data); // <-- you will need to change this
+        res.status(200).type('json').send(returnObject);
+
     });
-    console.log(req.query); // query object (key-value pairs after the ? in the url)
     });
 
 // PUT request handler for new crime incident
