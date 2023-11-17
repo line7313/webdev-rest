@@ -125,15 +125,15 @@ app.get('/incidents', (req, res) => {
     let params = [];
     let constructedParams = [];
     let limit = 1000;
+    let constructedParam = "";
 
     if (queryParams.hasOwnProperty("limit")) {
         limit = queryParams.limit;
     }
 
-
     if (queryParams.hasOwnProperty("code")) {
         let codes = queryParams.code.split(",");
-        let constructedParam = "( ";
+        constructedParam = "( ";
 
         codes.forEach((code) => {
             codes[codes.length - 1] != code ? constructedParam += "code = ? OR " : constructedParam += "code = ? )"; // Construct query string
@@ -143,19 +143,19 @@ app.get('/incidents', (req, res) => {
     }
 
     if (queryParams.hasOwnProperty("end_date")) {
-        constructedParam = 'date_time <= ' + queryParams.date;
+        constructedParam = 'date_time <= ' + queryParams.end_date;
         constructedParams.push(constructedParam);
     }  
 
 
     if (queryParams.hasOwnProperty("start_date")) {
-        constructedParam = 'date_time >= ' + queryParams.date;
+        constructedParam = 'date_time >= ' + queryParams.start_date;
         constructedParams.push(constructedParam);
     }  
 
     if (queryParams.hasOwnProperty("grid")) {
         let grids = queryParams.grid.split(",");
-        let constructedParam = "( ";
+        constructedParam = "( ";
 
         grids.forEach((grid) => {
             grids[grids.length - 1] != grid ? constructedParam += "police_grid = ? OR " : constructedParam += "police_grid = ? )"; // Construct query string
@@ -167,7 +167,7 @@ app.get('/incidents', (req, res) => {
 
     if (queryParams.hasOwnProperty("neighborhood")) {
         let neighborhoods = queryParams.neighborhood.split(",");
-        let constructedParam = "( ";
+        constructedParam = "( ";
 
         neighborhoods.forEach((neighborhood) => {
             neighborhoods[neighborhoods.length - 1] != neighborhood ? constructedParam += "neighborhood_number = ? OR " : constructedParam += "neighborhood_number = ? )"; // Construct query string
@@ -189,6 +189,7 @@ app.get('/incidents', (req, res) => {
     } 
 
     query += " ORDER BY date_time DESC LIMIT " + limit;
+    console.log(query);
 
     dbSelect(query, params)
     .then((data) => {
