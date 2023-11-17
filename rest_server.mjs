@@ -91,7 +91,7 @@ app.get('/codes', (req, res) => {
 // GET request handler for neighborhoods
 app.get('/neighborhoods', (req, res) => {
     let queryParams = req.query;
-    let query = 'SELECT * FROM Neighborhoods ORDER BY neighborhood_number';
+    let query = 'SELECT * FROM Neighborhoods';
     let params = [];
 
     if (queryParams.hasOwnProperty("id")) {
@@ -104,7 +104,9 @@ app.get('/neighborhoods', (req, res) => {
         });
     }
 
-    query += "ORDER BY neighborhood_number";    
+    query += " ORDER BY neighborhood_number"; 
+    
+    console.log(query);
 
     dbSelect(query, params)
     .then((data) => {
@@ -135,9 +137,9 @@ app.get('/incidents', (req, res) => {
 
         codes.forEach((code) => {
             codes[codes.length - 1] != code ? constructedParam += "code = ? OR " : constructedParam += "code = ? )"; // Construct query string
-            constructedParams.push(constructedParam);
             params.push(code);
         });
+        constructedParams.push(constructedParam);
     }
 
     if (queryParams.hasOwnProperty("end_date")) {
@@ -175,7 +177,6 @@ app.get('/incidents', (req, res) => {
         constructedParams.push(constructedParam);
     }
 
-
     if ( constructedParams.length > 0 ) {
         query += "WHERE ";
 
@@ -186,9 +187,8 @@ app.get('/incidents', (req, res) => {
             }
         });
     } 
+
     query += " ORDER BY date_time DESC LIMIT " + limit;
-
-
 
     dbSelect(query, params)
     .then((data) => {
