@@ -136,7 +136,7 @@ app.get('/incidents', (req, res) => {
         constructedParam = "( ";
 
         codes.forEach((code) => {
-            codes[codes.length - 1] != code ? constructedParam += "code = ? OR " : constructedParam += "code = ? )"; // Construct query string
+            codes[codes.length - 1] != code ? constructedParam += "case_number = ? OR " : constructedParam += "case_number = ? )"; // Construct query string
             params.push(code);
         });
         constructedParams.push(constructedParam);
