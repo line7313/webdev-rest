@@ -238,7 +238,7 @@ app.put('/new-incident', (req, res) => {
 app.delete('/remove-incident', (req, res) => {
     const incidentExist = 'SELECT * FROM incidents WHERE case_number = ?';
     const deleteQuery = 'DELETE FROM Incidents WHERE case_number = ?';
-    const params = [parseInt(req.query.case_number)];
+    const params = parseInt(req.body.case_number);
 
     dbSelect(incidentExist, params)
         .then((rows) => {
@@ -255,7 +255,6 @@ app.delete('/remove-incident', (req, res) => {
             res.status(200).type('txt').send(`Case number ${params} has been deleted successfully`);
         })
         .catch((error) => {
-            // Handle errors
             //console.log( error);
             res.status(500).type('txt').send("Id cannot be found");
         });
