@@ -74,12 +74,12 @@ function initializeCrimes() {
     // TODO: get code and neighborhood data
     //       get initial 1000 crimes
     console.log("HERE");
-    initial_crimes = fetch(`${crime_url.value}/codes`)
+    fetch(`${crime_url.value}/codes`)
     .then((response) => {
         return response.json();
     })
     .then((result) => {
-        console.log(result);
+        initial_crimes = result;
     }).catch((err) => {
         console.log(err);
     })
