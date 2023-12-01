@@ -3,6 +3,7 @@ import { reactive, ref, onMounted } from 'vue'
 
 let crime_url = ref('');
 let dialog_err = ref(false);
+let initial_crimes = ref('');
 let map = reactive(
     {
         leaflet: null,
@@ -72,6 +73,16 @@ onMounted(() => {
 function initializeCrimes() {
     // TODO: get code and neighborhood data
     //       get initial 1000 crimes
+    console.log("HERE");
+    initial_crimes = fetch(`${crime_url.value}/codes`)
+    .then((response) => {
+        return response.json();
+    })
+    .then((result) => {
+        console.log(result);
+    }).catch((err) => {
+        console.log(err);
+    })
 }
 
 // Function called when user presses 'OK' on dialog box

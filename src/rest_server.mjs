@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 import * as url from 'node:url';
-
+import { default as cors } from 'cors';
 import { default as express, query } from 'express';
 import { default as sqlite3 } from 'sqlite3';
 import { isStringObject } from 'node:util/types';
@@ -12,6 +12,7 @@ const port = 8000;
 
 let app = express();
 app.use(express.json());
+app.use(cors())
 
 /********************************************************************
  ***   DATABASE FUNCTIONS                                         *** 
