@@ -1,7 +1,7 @@
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
 
-let crime_url = ref('');
+let crime_url = ref('http://localhost:8000');
 let dialog_err = ref(false);
 let initial_crimes = ref('');
 let map = reactive(
@@ -14,33 +14,36 @@ let map = reactive(
         },
         zoom: 12,
         bounds: {
-            nw: {lat: 45.008206, lng: -93.217977},
-            se: {lat: 44.883658, lng: -92.993787}
+            nw: { lat: 45.008206, lng: -93.217977 },
+            se: { lat: 44.883658, lng: -92.993787 }
         },
         neighborhood_markers: [
-            {location: [44.942068, -93.020521], marker: null},
-            {location: [44.977413, -93.025156], marker: null},
-            {location: [44.931244, -93.079578], marker: null},
-            {location: [44.956192, -93.060189], marker: null},
-            {location: [44.978883, -93.068163], marker: null},
-            {location: [44.975766, -93.113887], marker: null},
-            {location: [44.959639, -93.121271], marker: null},
-            {location: [44.947700, -93.128505], marker: null},
-            {location: [44.930276, -93.119911], marker: null},
-            {location: [44.982752, -93.147910], marker: null},
-            {location: [44.963631, -93.167548], marker: null},
-            {location: [44.973971, -93.197965], marker: null},
-            {location: [44.949043, -93.178261], marker: null},
-            {location: [44.934848, -93.176736], marker: null},
-            {location: [44.913106, -93.170779], marker: null},
-            {location: [44.937705, -93.136997], marker: null},
-            {location: [44.949203, -93.093739], marker: null}
+            { location: [44.942068, -93.020521], marker: null },
+            { location: [44.977413, -93.025156], marker: null },
+            { location: [44.931244, -93.079578], marker: null },
+            { location: [44.956192, -93.060189], marker: null },
+            { location: [44.978883, -93.068163], marker: null },
+            { location: [44.975766, -93.113887], marker: null },
+            { location: [44.959639, -93.121271], marker: null },
+            { location: [44.947700, -93.128505], marker: null },
+            { location: [44.930276, -93.119911], marker: null },
+            { location: [44.982752, -93.147910], marker: null },
+            { location: [44.963631, -93.167548], marker: null },
+            { location: [44.973971, -93.197965], marker: null },
+            { location: [44.949043, -93.178261], marker: null },
+            { location: [44.934848, -93.176736], marker: null },
+            { location: [44.913106, -93.170779], marker: null },
+            { location: [44.937705, -93.136997], marker: null },
+            { location: [44.949203, -93.093739], marker: null }
         ]
     }
 );
 
 // Vue callback for once <template> HTML has been added to web page
 onMounted(() => {
+
+    initializeCrimes();
+
     // Create Leaflet map (set bounds and valied zoom levels)
     map.leaflet = L.map('leafletmap').setView([map.center.lat, map.center.lng], map.zoom);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -54,17 +57,17 @@ onMounted(() => {
     let district_boundary = new L.geoJson();
     district_boundary.addTo(map.leaflet);
     fetch('data/StPaulDistrictCouncil.geojson')
-    .then((response) => {
-        return response.json();
-    })
-    .then((result) => {
-        result.features.forEach((value) => {
-            district_boundary.addData(value);
+        .then((response) => {
+            return response.json();
+        })
+        .then((result) => {
+            result.features.forEach((value) => {
+                district_boundary.addData(value);
+            });
+        })
+        .catch((error) => {
+            console.log('Error:', error);
         });
-    })
-    .catch((error) => {
-        console.log('Error:', error);
-    });
 });
 
 
@@ -73,16 +76,16 @@ onMounted(() => {
 function initializeCrimes() {
     // TODO: get code and neighborhood data
     //       get initial 1000 crimes
-    console.log("HERE");
-    fetch(`${crime_url.value}/codes`)
-    .then((response) => {
-        return response.json();
-    })
-    .then((result) => {
-        initial_crimes = result;
-    }).catch((err) => {
-        console.log(err);
-    })
+    fetch(`${crime_url.value}/incidents?limit=1000`)
+        .then((response) => {
+            return response.json();
+        })
+        .then((result) => {
+            console.log(result);
+            initial_crimes = result;
+        }).catch((err) => {
+            console.log(err);
+        })
 }
 
 // Function called when user presses 'OK' on dialog box
@@ -106,12 +109,45 @@ function closeDialog() {
         <label class="dialog-label">URL: </label>
         <input id="dialog-url" class="dialog-input" type="url" v-model="crime_url" placeholder="http://localhost:8000" />
         <p class="dialog-error" v-if="dialog_err">Error: must enter valid URL</p>
-        <br/>
+        <br />
         <button class="button" type="button" @click="closeDialog">OK</button>
     </dialog>
     <div class="grid-container ">
         <div class="grid-x grid-padding-x">
             <div id="leafletmap" class="cell auto"></div>
+        </div>
+    </div>
+
+    <div>
+        <form>
+            <!--Will add report a crime form here -->
+        </form>
+    </div>
+
+    <div>
+        <div>
+            <h2>Crime Table</h2>
+            <!-- Once map working will modify to only include crimes that are visible on the map -->
+            <table>
+                <thead>
+                    <tr>
+                        <th>Block</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Incident</th>
+                        <th>Case Number</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="crime in initial_crimes" :key="crime.case_number">
+                        <td>{{ crime.block }}</td>
+                        <td>{{ crime.date }}</td>
+                        <td>{{ crime.time }}</td>
+                        <td>{{ crime.incident }}</td>
+                        <td>{{ crime.case_number }}</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </template>
