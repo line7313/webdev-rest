@@ -20,6 +20,7 @@ app.use(cors())
 // Open SQLite3 database (in read-write mode)
 let db = new sqlite3.Database(db_filename, sqlite3.OPEN_READWRITE, (err) => {
     if (err) {
+        console.log(err);
         console.log('Error opening ' + path.basename(db_filename));
     }
     else {
@@ -144,7 +145,7 @@ app.get('/incidents', (req, res) => {
     }
 
     if (queryParams.hasOwnProperty("end_date")) {
-        constructedParam = "date_time <= '" + queryParams.end_date + "'";
+        constructedParam = "date_time <= '" + queryParams.end_date + "T23:59:59'";
         constructedParams.push(constructedParam);
     }  
 
