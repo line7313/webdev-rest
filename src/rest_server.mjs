@@ -222,11 +222,20 @@ app.get('/incidents', (req, res) => {
 app.put('/new-incident', (req, res) => {
     const data = req.body    
     let newIncident = []
+
+    const date = data["date"]
+    delete data["date"]
+    const time = data["time"]
+    delete data["time"]
+    const date_time = date + "T" + time
+    data["date_time"] = date_time  
     
     Object.values(data).forEach((item) => {
         typeof(item) == "string" ? newIncident.push(`"${item}"`) : newIncident.push(item)
     });
-    const query = "INSERT INTO Incidents VALUES (" + newIncident + ");"
+    const query = "INSERT INTO Incidents (case_number, code, incident, police_grid, neighborhood_number, block, date_time) VALUES (" + newIncident + ");"
+
+    console.log(query)
 
     const p = dbSelect(query, [])
     p.then((data, err) => {
