@@ -4,6 +4,35 @@ import { reactive, ref, onMounted } from 'vue'
 let crime_url = ref('http://localhost:8000');
 let dialog_err = ref(false);
 let initial_crimes = ref('');
+
+//incident filter
+const incidentFilter = ref({
+  Narcotics: false,
+  Assault: false,
+  Theft: false,
+  Other: false
+});
+
+const neighborhoodFilter= ref({
+    "Conway/Battlecreek/Highwood":false,
+    "Greater East Side":false,
+    "West Side":false,
+    "Dayton's Bluff":false,
+    "Payne/Phalen":false,
+    "North End":false,
+    "Thomas/Dale(Frogtown)":false,
+    "Summit/University":false,
+    "West Seventh":false,
+    "Como":false,
+    "Hamline/Midway":false,
+    "St. Anthony":false,
+    "Union Park":false,
+    "Macalester-Groveland":false,
+    "Highland":false,
+    "Summit Hill":false,
+    "Capitol River":false
+})
+
 let map = reactive(
     {
         leaflet: null,
@@ -101,6 +130,89 @@ function closeDialog() {
         dialog_err.value = true;
     }
 }
+
+
+// Function for generating code conditions
+function generateCodeConditions(incidentFilter) {
+  let codeConditions = [];
+
+  for (const [key, value] of Object.entries(incidentFilter)) {
+    if (value === true) {
+      const lowerKey = key.toLowerCase();
+      if (lowerKey === 'vandalism') {
+        codeConditions.push('code >= 1400 AND code < 1430');
+      } else if (lowerKey === 'theft') {
+        codeConditions.push('code > 600 AND code < 693');
+      } else if (lowerKey === 'narcotics') {
+        codeConditions.push('code > 1800 AND code < 1885');
+      } else if (lowerKey === 'assault') {
+        codeConditions.push('code > 400 AND code < 863 AND incident LIKE "%assau%"');
+      } else if (lowerKey === 'other') {
+        // other code conditions
+        codeConditions.push('code > 100 AND code NOT BETWEEN 1400 AND 1430 AND code NOT BETWEEN 600 AND 693 AND code NOT BETWEEN 1800 AND 1885 AND code NOT BETWEEN 400 AND 863');
+      }
+    }
+  }
+
+  if(codeConditions.length>1){
+    return codeConditions.join(' OR ');
+  }else{
+    return codeConditions;
+  }
+ 
+}
+
+// Function for generating neighborhood conditions
+function generateNeighborhoodNames(neighborhoodFilter) {
+  let neighborhoodNames = [];
+
+  for (const [key, value] of Object.entries(neighborhoodFilter)) {
+    if (value === true && key.toLowerCase() !== 'other') {
+      // Construct neighborhood conditions based on selected filters
+      neighborhoodNames.push(`neighborhood = '${key}'`);
+    }
+  }
+  if(neighborhoodNames.length>1){
+    return neighborhoodNames.join(' OR ');
+  }else{
+    return neighborhoodNames;
+  }
+}
+
+
+function updateFilter() {
+  
+  const codeConditions = generateCodeConditions(incidentFilter);
+  const neighborhood = generateNeighborhoodNames(neighborhoodFilter);
+
+  let finalCodeCondition = '';
+
+  if (codeConditions.length>0 ) {
+    finalCodeCondition += codeConditions;
+  }
+
+  if (neighborhood.length > 0) {
+    if (finalCodeCondition !== '') {
+      finalCodeCondition += ' AND ';
+    }
+    finalCodeCondition += neighborhood;
+  }
+
+  if (finalCodeCondition === '') {
+    finalCodeCondition = 'code > 100';
+  }
+
+  fetch(`http://localhost:8000/incidents?codeCondition=${finalCodeCondition}`)
+    .then((response) => response.json())
+    .then((json) => {
+      console.log(json);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+}
+
+
 </script>
 
 <template>
@@ -111,6 +223,7 @@ function closeDialog() {
         <p class="dialog-error" v-if="dialog_err">Error: must enter valid URL</p>
         <br />
         <button class="button" type="button" @click="closeDialog">OK</button>
+
     </dialog>
     <div class="grid-container ">
         <div class="grid-x grid-padding-x">
@@ -123,6 +236,24 @@ function closeDialog() {
             <!--Will add report a crime form here -->
         </form>
     </div>
+
+    <!--Incident filter check box-->
+    <div>
+        <p style="font-weight: bold;">Incident Filter</p>
+        <label style="display: inline; padding:10px;" v-for="(checked, incident) in incidentFilter" :key="incident">
+            <input type="checkbox" v-model="incidentFilter[incident]" @change="updateFilter" />
+            {{ incident }}
+        </label>
+  </div>
+
+  <!--neighborhood filter check box-->
+  <div>
+        <p style="font-weight: bold;">Neighborhood Filter</p>
+        <label style="display: inline; padding:10px;" v-for="(checked, neighborhood) in neighborhoodFilter" :key="neighborhood">
+            <input type="checkbox" v-model="neighborhoodFilter[neighborhood]" @change="updateFilter" />
+            {{ neighborhood }}
+        </label>
+  </div>
 
     <div>
         <div>
@@ -149,6 +280,8 @@ function closeDialog() {
                 </tbody>
             </table>
         </div>
+
+
     </div>
 </template>
 
