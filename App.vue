@@ -136,15 +136,17 @@ function closeDialog() {
 function generateCodeConditions(incidentFilter) {
   let codeConditions = [];
 
-  for (const [key, value] of Object.entries(incidentFilter)) {
+  for (const [key, value] of Object.entries(incidentFilter.value)) {
     if (value === true) {
       const lowerKey = key.toLowerCase();
+      console.log("current key is "+lowerKey)
       if (lowerKey === 'vandalism') {
         codeConditions.push('code >= 1400 AND code < 1430');
       } else if (lowerKey === 'theft') {
         codeConditions.push('code > 600 AND code < 693');
       } else if (lowerKey === 'narcotics') {
         codeConditions.push('code > 1800 AND code < 1885');
+        console.log(codeConditions)
       } else if (lowerKey === 'assault') {
         codeConditions.push('code > 400 AND code < 863 AND incident LIKE "%assau%"');
       } else if (lowerKey === 'other') {
@@ -153,7 +155,7 @@ function generateCodeConditions(incidentFilter) {
       }
     }
   }
-
+  
   if(codeConditions.length>1){
     return codeConditions.join(' OR ');
   }else{
@@ -166,7 +168,7 @@ function generateCodeConditions(incidentFilter) {
 function generateNeighborhoodNames(neighborhoodFilter) {
   let neighborhoodNames = [];
 
-  for (const [key, value] of Object.entries(neighborhoodFilter)) {
+  for (const [key, value] of Object.entries(neighborhoodFilter.value)) {
     if (value === true && key.toLowerCase() !== 'other') {
       // Construct neighborhood conditions based on selected filters
       neighborhoodNames.push(`neighborhood = '${key}'`);
@@ -184,7 +186,10 @@ function updateFilter() {
   
   const codeConditions = generateCodeConditions(incidentFilter);
   const neighborhood = generateNeighborhoodNames(neighborhoodFilter);
-
+  
+  //console.log(codeConditions);
+  //console.log(neighborhood);
+  
   let finalCodeCondition = '';
 
   if (codeConditions.length>0 ) {
@@ -201,8 +206,11 @@ function updateFilter() {
   if (finalCodeCondition === '') {
     finalCodeCondition = 'code > 100';
   }
+  console.log(`This is the start-----------------------------------------------`)
+  console.log(finalCodeCondition);
+  console.log(`This is the end-----------------------------------------------`)
 
-  fetch(`http://localhost:8000/incidents?codeCondition=${finalCodeCondition}`)
+  fetch(`http://localhost:8000/incidents?code=${finalCodeCondition}`)
     .then((response) => response.json())
     .then((json) => {
       console.log(json);
