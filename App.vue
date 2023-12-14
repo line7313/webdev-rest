@@ -140,19 +140,19 @@ function generateCodeConditions(incidentFilter) {
   for (const [key, value] of Object.entries(incidentFilter.value)) {
     if (value === true) {
       const lowerKey = key.toLowerCase();
-      console.log("current key is " + lowerKey)
+      //console.log("current key is " + lowerKey)
       if (lowerKey === 'vandalism') {
-        codeConditions.push('code >= 1400 AND code < 1430');
+        codeConditions.push('code BETWEEN 1400 AND 1430');
       } else if (lowerKey === 'theft') {
-        codeConditions.push('code > 600 AND code < 693');
+        codeConditions.push('code BETWEEN 600 AND 693');
       } else if (lowerKey === 'narcotics') {
-        codeConditions.push('code > 1800 AND code < 1885');
+        codeConditions.push('code BETWEEN 1800 AND 1885');
         console.log(codeConditions)
       } else if (lowerKey === 'assault') {
-        codeConditions.push('code > 400 AND code < 863 AND incident LIKE "%assau%"');
+        codeConditions.push('code BETWEEN 400 AND 863 AND incident LIKE "%assau%"');
       } else if (lowerKey === 'other') {
         // other code conditions
-        codeConditions.push('code > 100 AND code NOT BETWEEN 1400 AND 1430 AND code NOT BETWEEN 600 AND 693 AND code NOT BETWEEN 1800 AND 1885 AND code NOT BETWEEN 400 AND 863');
+        codeConditions.push('code NOT BETWEEN 1400 AND 1430 AND code NOT BETWEEN 600 AND 693 AND code NOT BETWEEN 1800 AND 1885 AND code NOT BETWEEN 400 AND 863');
       }
     }
   }
@@ -184,7 +184,6 @@ function generateNeighborhoodNames(neighborhoodFilter) {
 
 
 function updateFilter() {
-
   const codeConditions = generateCodeConditions(incidentFilter);
   const neighborhood = generateNeighborhoodNames(neighborhoodFilter);
 
@@ -208,15 +207,24 @@ function updateFilter() {
   console.log(finalCodeCondition);
   console.log(`This is the end-----------------------------------------------`)
 
-  fetch(`http://localhost:8000/incidents?code=${finalCodeCondition}`)
-    .then((response) => response.json())
-    .then((json) => {
-      console.log(json);
+  fetch(`${crime_url.value}/codes?code=${finalCodeCondition}`)
+    .then((response) => {
+      console.log(`that it even get hereeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then((result) => {
+      console.log(`what about here too`)
+      initial_crimes = result;
+      console.log(result);
     })
     .catch((err) => {
       console.log(err);
     });
 }
+
 
 
 </script>
