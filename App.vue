@@ -3,7 +3,7 @@ import { reactive, ref, onMounted } from 'vue'
 
 let crime_url = ref('http://localhost:8000');
 let dialog_err = ref(false);
-let initial_crimes = ref('');
+let initial_crimes = ref([]);
 let isLoading = ref(true);
 
 //incident filter
@@ -133,81 +133,57 @@ function closeDialog() {
 }
 
 
-// Function for generating code conditions
-function generateCodeConditions(incidentFilter) {
-  let codeConditions = [];
+// Function for checking which filter has been selected
+function generateConditions(filters) {
+  const conditions = [];
 
-  for (const [key, value] of Object.entries(incidentFilter.value)) {
+  for (const [key, value] of Object.entries(filters)) {
     if (value === true) {
-      const lowerKey = key.toLowerCase();
-      //console.log("current key is " + lowerKey)
-      if (lowerKey === 'vandalism') {
-        codeConditions.push('code BETWEEN 1400 AND 1430');
-      } else if (lowerKey === 'theft') {
-        codeConditions.push('code BETWEEN 600 AND 693');
-      } else if (lowerKey === 'narcotics') {
-        codeConditions.push('code BETWEEN 1800 AND 1885');
-        console.log(codeConditions)
-      } else if (lowerKey === 'assault') {
-        codeConditions.push('code BETWEEN 400 AND 863 AND incident LIKE "%assau%"');
-      } else if (lowerKey === 'other') {
-        // other code conditions
-        codeConditions.push('code NOT BETWEEN 1400 AND 1430 AND code NOT BETWEEN 600 AND 693 AND code NOT BETWEEN 1800 AND 1885 AND code NOT BETWEEN 400 AND 863');
+      if (key.toLowerCase() === 'vandalism') {
+        conditions.push('BETWEEN 1400 AND 1430');
+      } else if (key.toLowerCase() === 'theft') {
+        conditions.push('BETWEEN 600 AND 693');
+      } else if (key.toLowerCase() === 'narcotics') {
+        conditions.push('BETWEEN 1800 AND 1885');
+      } else if (key.toLowerCase() === 'assault') {
+        conditions.push('BETWEEN 400 AND 863 AND incident LIKE "%assau%"');
+      } else {
+        conditions.push(`neighborhood = '${key}'`);
       }
     }
   }
 
-  if (codeConditions.length > 1) {
-    return codeConditions.join(' OR ');
-  } else {
-    return codeConditions;
-  }
-
-}
-
-// Function for generating neighborhood conditions
-function generateNeighborhoodNames(neighborhoodFilter) {
-  let neighborhoodNames = [];
-
-  for (const [key, value] of Object.entries(neighborhoodFilter.value)) {
-    if (value === true && key.toLowerCase() !== 'other') {
-      // Construct neighborhood conditions based on selected filters
-      neighborhoodNames.push(`neighborhood = '${key}'`);
-    }
-  }
-  if (neighborhoodNames.length > 1) {
-    return neighborhoodNames.join(' OR ');
-  } else {
-    return neighborhoodNames;
-  }
+  return conditions;
 }
 
 
 function updateFilter() {
-  const codeConditions = generateCodeConditions(incidentFilter);
-  const neighborhood = generateNeighborhoodNames(neighborhoodFilter);
+  const selectedIncidents = generateConditions(incidentFilter.value);
+  const selectedNeighborhoods = generateConditions(neighborhoodFilter.value);
+
 
   let finalCodeCondition = '';
 
-  if (codeConditions.length > 0) {
-    finalCodeCondition += codeConditions;
+  if (selectedIncidents.length > 0) {
+    finalCodeCondition += selectedIncidents;
   }
 
-  if (neighborhood.length > 0) {
+  if (selectedNeighborhoods.length > 0) {
     if (finalCodeCondition !== '') {
       finalCodeCondition += ' AND ';
     }
-    finalCodeCondition += neighborhood;
+    finalCodeCondition += selectedNeighborhoods;
   }
 
-  if (finalCodeCondition === '') {
-    finalCodeCondition = 'code > 100';
+  if (finalCodeCondition == '') {
+    finalCodeCondition = 'limit=1000';
   }
   console.log(`This is the start-----------------------------------------------`)
   console.log(finalCodeCondition);
   console.log(`This is the end-----------------------------------------------`)
-
-  fetch(`${crime_url.value}/codes?code=${finalCodeCondition}`)
+  //initial_crimes = ref('');
+  
+  fetch(`${crime_url.value}/incidents?limit=10`)
     .then((response) => {
       console.log(`that it even get hereeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee`);
       if (!response.ok) {
@@ -217,8 +193,8 @@ function updateFilter() {
     })
     .then((result) => {
       console.log(`what about here too`)
-      initial_crimes = result;
-      console.log(result);
+      initial_crimes.value = result;
+      console.log(initial_crimes.value);
     })
     .catch((err) => {
       console.log(err);
@@ -252,16 +228,16 @@ function updateFilter() {
   </div>
 
   <!--Incident filter check box-->
-  <div>
+  <div v-if="Object.keys(incidentFilter).length > 0">
     <p style="font-weight: bold;">Incident Filter</p>
     <label style="display: inline; padding:10px;" v-for="(checked, incident) in incidentFilter" :key="incident">
       <input type="checkbox" v-model="incidentFilter[incident]" @change="updateFilter" />
       {{ incident }}
     </label>
-  </div>
+  </div >
 
   <!--neighborhood filter check box-->
-  <div>
+  <div v-if="Object.keys(neighborhoodFilter).length > 0">
     <p style="font-weight: bold;">Neighborhood Filter</p>
     <label style="display: inline; padding:10px;" v-for="(checked, neighborhood) in neighborhoodFilter"
       :key="neighborhood">
