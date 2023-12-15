@@ -80,7 +80,8 @@ app.get('/codes', (req, res) => {
             params.push(code);
         });
     }
-
+    console.log(params)
+    console.log(query)
     dbSelect(query, params)
     .then((data) => {
         data.forEach((line) => {
@@ -167,16 +168,19 @@ app.get('/incidents', (req, res) => {
         constructedParams.push(constructedParam);
     }
 
-    if (queryParams.hasOwnProperty("neighborhood")) {
-        let neighborhoods = queryParams.neighborhood.split(",");
-        constructedParam = "( ";
+    if (queryParams.hasOwnProperty("neighborhood_number")) {
+        let neighborhoods = queryParams.neighborhood_number.split(",");
+        console.log(neighborhoods)
+
+        constructedParam = "";
 
         neighborhoods.forEach((neighborhood) => {
-            neighborhoods[neighborhoods.length - 1] != neighborhood ? constructedParam += "neighborhood_number = ? OR " : constructedParam += "neighborhood_number = ? )"; // Construct query string
+            neighborhoods[neighborhoods.length - 1] != neighborhood ? constructedParam += "neighborhood_number = ? OR " : constructedParam += "neighborhood_number = ?"; // Construct query string
             params.push(neighborhood);
         });
 
         constructedParams.push(constructedParam);
+        console.log(constructedParams)
     }
 
     if ( constructedParams.length > 0 ) {
