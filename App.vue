@@ -2,10 +2,28 @@
 import { reactive, ref, onMounted } from 'vue'
 
 let crime_url = ref('http://localhost:8000');
+const nominatim_url = ref('https://nominatim.openstreetmap.org');
 let dialog_err = ref(false);
 let initial_crimes = ref([]);
 let isLoading = ref(true);
 let submitError = ref(null);
+let agent = ref(navigator.userAgent);
+
+const incidentColor = ref({
+  "Narcotics": "palegreen",
+  "Assualt": "gainsboro",
+  "Theft": "palegoldenrod",
+  "Proactive Police Visit": "lightskyblue",
+  "Robbery": "lightyellow",
+  "Criminal Damage": "khaki",
+  "Burglary": "lemonchiffon",
+  "Agg. Assault Dom." : "violet",
+  "Simple Assault Dom.": "plum",
+  "Community Event": "gainsboro",
+  "Agg. Assault": "hotpink",
+  "Auto Theft": "salmon",
+  "Discharge": "ivory"
+})
 
 let newCrime = ref({
   "case_number": "",
@@ -18,6 +36,8 @@ let newCrime = ref({
   "time": ""
 })
 
+let addressGeolocation = ref({})
+
 //incident filter
 const incidentFilter = ref({
   Narcotics: false,
@@ -25,6 +45,11 @@ const incidentFilter = ref({
   Theft: false,
   Other: false,
 });
+
+const curMapBounds = ref({
+  ne: null,
+  sw: null
+})
 
 const neighborhoodFilter = ref({
   1: false,
@@ -81,9 +106,10 @@ let map = reactive(
   }
 );
 
+
+
 // Vue callback for once <template> HTML has been added to web page
 onMounted(() => {
-
   initializeCrimes();
 
   // Create Leaflet map (set bounds and valied zoom levels)
@@ -95,8 +121,19 @@ onMounted(() => {
   }).addTo(map.leaflet);
   map.leaflet.setMaxBounds([[44.883658, -93.217977], [45.008206, -92.993787]]);
 
+  map.leaflet.on('move', function onDragEnd(){
+    // console.log(map.leaflet.getBounds())
+    curMapBounds.ne = map.leaflet.getBounds()["_northEast"]
+    curMapBounds.sw = map.leaflet.getBounds()["_southWest"]
+    });
+
   // Get boundaries for St. Paul neighborhoods
   let district_boundary = new L.geoJson();
+
+  // set map bounds refs
+    curMapBounds.ne = map.leaflet.getBounds()["_northEast"]
+    curMapBounds.sw = map.leaflet.getBounds()["_southWest"]
+
   district_boundary.addTo(map.leaflet);
   fetch('data/StPaulDistrictCouncil.geojson')
     .then((response) => {
@@ -111,6 +148,25 @@ onMounted(() => {
       console.log('Error:', error);
     });
 });
+
+//TODO: replace other fetch functions with this
+function fetchData(url,params) {
+  let requestUrl = `${url.value}/${params}`
+  console.log(requestUrl)
+  return fetch(`${url.value}/${params}`, {
+    headers: {
+      "User-Agent": agent.value,
+      "Email": "krie2910@stthomas.edu"
+    }
+  })
+  .then((response) => {
+      console.log(`that it even get hereeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      return response.json();
+    })  
+}
 
 
 // FUNCTIONS
@@ -129,6 +185,7 @@ function initializeCrimes() {
       console.log(err);
     })
 }
+
 
 function submitNewCrime() {  
   //curl -X PUT -H "Content-Type: application/json" -d "{\"case_number\": \"123456\",\"code\": \"99999\",\"incident\": \"Theft\",\"police_grid\": \"ABC\",\"neighborhood_number\": 123,\"block\": \"XYZ\",\"date\": \"2023-12-15\",\"time\": \"12:34:56\"}" "http://localhost:8000/new-incident"
@@ -170,6 +227,25 @@ function closeDialog() {
   }
 }
 
+function getCoordsFromAddress(address) {
+  if (address in addressGeolocation) {
+    return addressGeolocation[address]
+  }
+  let addresString = address  
+  //Two cases: intersection or ananymized street address
+  addresString = addresString.replace(" AND ", " & ")
+  let tempList = address.split(" ")
+  tempList[0] = tempList[0].replaceAll("X", "0")
+  addresString = tempList.join("+")
+  const queryString = "search.php?q=" + addresString+"+Saint+Paul&format=json&limit=1"
+  console.log(queryString)
+  fetchData(nominatim_url, queryString).then((result) => {
+    console.log("result " + result)
+    addressGeolocation[address] = result
+  }).catch((err) => {
+      console.log(err);
+    });
+}
 
 // Function for checking which filter has been selected
 function generateConditions(filters) {
@@ -202,6 +278,8 @@ function generateConditions(filters) {
 function updateFilter() {
   const selectedIncidents = generateConditions(incidentFilter.value);
   const selectedNeighborhoods = generateConditions(neighborhoodFilter.value);
+  const mapBounds = curMapBounds.value
+  console.log(mapBounds)
 
   let finalCodeCondition = '';
 
@@ -239,13 +317,14 @@ function updateFilter() {
     .then((result) => {
       initial_crimes.value = result;
       console.log(initial_crimes.value);
+      // initial_crimes.value.forEach((crime) => {
+      //   getCoordsFromAddress(crime["block"])
+      // })
     })
     .catch((err) => {
       console.log(err);
     });
 }
-
-
 
 </script>
 
@@ -342,7 +421,7 @@ function updateFilter() {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="crime in initial_crimes" :key="crime.case_number">
+          <tr v-for="crime in initial_crimes" :key="crime.case_number" :style="{backgroundColor: incidentColor[crime.incident]}">
             <td>{{ crime.block }}</td>
             <td>{{ crime.date }}</td>
             <td>{{ crime.time }}</td>
