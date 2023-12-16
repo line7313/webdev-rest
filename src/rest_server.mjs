@@ -138,19 +138,36 @@ app.get('/incidents', (req, res) => {
         query = 'SELECT * FROM Incidents WHERE ';
 
         codes.forEach((code, index) => {
+            console.log(code.includes("neighborhood_number"))
             if (code.includes("between")) {
                 // Handle range query
                 const rangeValues = code.split("between")[1].split("and").map(value => value.trim());
-                query += "code BETWEEN ? AND ? OR ";
+                query += "(code BETWEEN ? AND ?) OR ";
+                if (query.endsWith(" OR ")) {
+                    query = query.slice(0, -4);
+                }
                 params.push(rangeValues[0], rangeValues[1]);
+            }
+            //if there is neighborhood_number included in the query 
+             if (code.includes("neighborhood_number")) {
+                // Handle neighborhood_number
+                const neighborhoodValue = code.split("=")[1].trim();
+                query += " AND (neighborhood_number = ?)  ";
+                console.log("_______________"+query)
+                params.push(neighborhoodValue);
             } else {
-                query += "code = ? OR ";
-                params.push(code);
+                // Treat single code as a range (e.g., 400 as between 400 and 600)
+                query += "(code BETWEEN ? AND ?) OR ";
+                params.push(code.trim(), (parseInt(code.trim()) + 200).toString());
             }
         });
 
-        query = query.slice(0, -4); // Remove the trailing " OR "
+        // Remove the trailing " OR " if it exists
+        if (query.endsWith(" OR ")) {
+            query = query.slice(0, -4);
+        }
     }
+
 
     if (queryParams.hasOwnProperty("end_date")) {
         constructedParams.push("date_time <= ?");
@@ -202,6 +219,7 @@ app.get('/incidents', (req, res) => {
 
     query += " ORDER BY date_time DESC LIMIT ?";
     params.push(limit);
+    console.log(query)
 
     dbSelect(query, params)
         .then((data) => {

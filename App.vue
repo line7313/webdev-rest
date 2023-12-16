@@ -178,16 +178,22 @@ function generateConditions(filters) {
     theft: 'between 600 and 693',
     narcotics: 'between 1800 and 1885',
     assault: 'between 400 and 863 and incident LIKE "%assau%"',
+    //might take this out
+    other: 'NOT BETWEEN 1400 AND 1430 AND code NOT BETWEEN 600 AND 693 AND code NOT BETWEEN 1800 AND 1885 AND code NOT BETWEEN 400 AND 863'
   };
   const conditions = [];
 
+  //checking which checkbox is checked or not and pushing
   for (const [key, value] of Object.entries(filters)) {
     if (value && conditionMap[key.toLowerCase()]) {
-      conditions.push("code="+conditionMap[key.toLowerCase()]);
+      conditions.push(`code=${conditionMap[key.toLowerCase()]}`);
     } else if (value) {
       conditions.push(`neighborhood_number=${key}`);
     }
   }
+  console.log("This is what gets sent")
+  console.log(conditions)
+  console.log("************************************")
 
   return conditions;
 }
@@ -197,44 +203,40 @@ function updateFilter() {
   const selectedIncidents = generateConditions(incidentFilter.value);
   const selectedNeighborhoods = generateConditions(neighborhoodFilter.value);
 
-  console.log(selectedIncidents)
-  console.log(selectedNeighborhoods)
-  console.log("********************************")
-
   let finalCodeCondition = '';
 
   if (selectedIncidents.length > 0) {
-    finalCodeCondition += selectedIncidents;
+    finalCodeCondition = selectedIncidents.length > 1 ? `${selectedIncidents.join(' OR ')}` : selectedIncidents[0];
   }
 
   if (selectedNeighborhoods.length > 0) {
-    if (finalCodeCondition !== '') {
-      console.log("does it work here")
-      finalCodeCondition += ' AND ';
+    const neighborhoodCondition = selectedNeighborhoods.length > 1 ? `${selectedNeighborhoods.join(' OR ')}` : selectedNeighborhoods[0];
+
+    if (finalCodeCondition) {
+      finalCodeCondition += ` AND ${neighborhoodCondition}`;
+    } else {
+      finalCodeCondition = neighborhoodCondition;
     }
-    finalCodeCondition += selectedNeighborhoods;
   }
 
-  if (finalCodeCondition == '') {
-    console.log("I doubttttttttttttttttttttttttt")
+  if (finalCodeCondition === '') {
     finalCodeCondition = 'limit=1000';
   }
-  console.log(`This is the start-----------------------------------------------`)
+
   console.log(finalCodeCondition);
-  console.log(`This is the end-----------------------------------------------`)
-  //initial_crimes = ref('');
-  const filterUrl= "http://localhost:8000/incidents?"+finalCodeCondition
-  console.log(filterUrl)
+
+  const filterUrl = `http://localhost:8000/incidents?${finalCodeCondition}`;
+
+  console.log(filterUrl);
+
   fetch(filterUrl)
     .then((response) => {
-      console.log(`that it even get hereeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee`);
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
       return response.json();
     })
     .then((result) => {
-      console.log(`what about here too`)
       initial_crimes.value = result;
       console.log(initial_crimes.value);
     })
