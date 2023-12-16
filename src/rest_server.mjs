@@ -74,7 +74,7 @@ app.get('/codes', (req, res) => {
     if (queryParams.hasOwnProperty("code")) {
         let codes = queryParams.code.split(",");
         query = 'SELECT * FROM Codes WHERE ';
-
+        
         codes.forEach((code) => {
             codes[codes.length - 1] != code ? query += "code = ? OR " : query += "code = ?"; // Construct query string
             params.push(code);
@@ -122,13 +122,12 @@ app.get('/neighborhoods', (req, res) => {
 });
 
 // GET request handler for crime incidents
-app.get('/incidents', (req, res) => {    
+app.get('/incidents', (req, res) => {
     let queryParams = req.query;
     let query = 'SELECT * FROM Incidents ';
     let params = [];
     let constructedParams = [];
     let limit = 1000;
-    let constructedParam = "";
 
     if (queryParams.hasOwnProperty("limit")) {
         limit = queryParams.limit;
@@ -136,33 +135,45 @@ app.get('/incidents', (req, res) => {
 
     if (queryParams.hasOwnProperty("code")) {
         let codes = queryParams.code.split(",");
-        constructedParam = "( ";
+        query = 'SELECT * FROM Incidents WHERE ';
 
-        codes.forEach((code) => {
-            codes[codes.length - 1] != code ? constructedParam += "case_number = ? OR " : constructedParam += "case_number = ? )"; // Construct query string
-            params.push(code);
+        codes.forEach((code, index) => {
+            if (code.includes("between")) {
+                // Handle range query
+                const rangeValues = code.split("between")[1].split("and").map(value => value.trim());
+                query += "code BETWEEN ? AND ? OR ";
+                params.push(rangeValues[0], rangeValues[1]);
+            } else {
+                query += "code = ? OR ";
+                params.push(code);
+            }
         });
-        constructedParams.push(constructedParam);
+
+        query = query.slice(0, -4); // Remove the trailing " OR "
     }
 
     if (queryParams.hasOwnProperty("end_date")) {
-        constructedParam = "date_time <= '" + queryParams.end_date + "T23:59:59'";
-        constructedParams.push(constructedParam);
-    }  
-
+        constructedParams.push("date_time <= ?");
+        params.push(queryParams.end_date + "T23:59:59");
+    }
 
     if (queryParams.hasOwnProperty("start_date")) {
-        constructedParam = "date_time >= '" + queryParams.start_date + "'";
-        constructedParams.push(constructedParam);
-    }  
+        constructedParams.push("date_time >= ?");
+        params.push(queryParams.start_date);
+    }
 
     if (queryParams.hasOwnProperty("grid")) {
         let grids = queryParams.grid.split(",");
-        constructedParam = "( ";
+        let constructedParam = "( ";
 
-        grids.forEach((grid) => {
-            grids[grids.length - 1] != grid ? constructedParam += "police_grid = ? OR " : constructedParam += "police_grid = ? )"; // Construct query string
+        grids.forEach((grid, index) => {
+            constructedParam += "police_grid = ? OR ";
             params.push(grid);
+
+            if (index === grids.length - 1) {
+                constructedParam = constructedParam.slice(0, -4); // Remove the trailing " OR "
+                constructedParam += ")";
+            }
         });
 
         constructedParams.push(constructedParam);
@@ -170,57 +181,54 @@ app.get('/incidents', (req, res) => {
 
     if (queryParams.hasOwnProperty("neighborhood_number")) {
         let neighborhoods = queryParams.neighborhood_number.split(",");
-        console.log(neighborhoods)
+        let constructedParam = "( ";
 
-        constructedParam = "";
-
-        neighborhoods.forEach((neighborhood) => {
-            neighborhoods[neighborhoods.length - 1] != neighborhood ? constructedParam += "neighborhood_number = ? OR " : constructedParam += "neighborhood_number = ?"; // Construct query string
+        neighborhoods.forEach((neighborhood, index) => {
+            constructedParam += "neighborhood_number = ? OR ";
             params.push(neighborhood);
+
+            if (index === neighborhoods.length - 1) {
+                constructedParam = constructedParam.slice(0, -4); // Remove the trailing " OR "
+                constructedParam += ")";
+            }
         });
 
         constructedParams.push(constructedParam);
-        console.log(constructedParams)
     }
 
-    if ( constructedParams.length > 0 ) {
-        query += "WHERE ";
+    if (constructedParams.length > 0) {
+        query += "WHERE " + constructedParams.join(" AND ");
+    }
 
-        constructedParams.forEach((constructedParam) => {
-            query += constructedParam;
-            if ( constructedParams[constructedParams.length - 1] != constructedParam ) {
-                query += " AND ";
-            }
-        });
-    } 
-
-    query += " ORDER BY date_time DESC LIMIT " + limit;
-    console.log(query);
+    query += " ORDER BY date_time DESC LIMIT ?";
+    params.push(limit);
 
     dbSelect(query, params)
-    .then((data) => {
-        let returnObject = [];
-        data.forEach((line) => {
-            let dateTimeParsed = line.date_time.split("T"); // Seperate date and time
-            let date = dateTimeParsed[0];
-            let time = dateTimeParsed[1];
-            let incident = { // Map to new indcident object
-                "case_number": line.case_number,
-                "date": date,
-                "time": time,
-                "code": line.code,
-                "incident": line.incident,
-                "police_grid": line.police_grid,
-                "neighborhood_number": line.neighborhood_number,
-                "block": line.block
-            };
+        .then((data) => {
+            let returnObject = data.map((line) => {
+                let dateTimeParsed = line.date_time.split("T"); // Separate date and time
+                let date = dateTimeParsed[0];
+                let time = dateTimeParsed[1];
+                return {
+                    "case_number": line.case_number,
+                    "date": date,
+                    "time": time,
+                    "code": line.code,
+                    "incident": line.incident,
+                    "police_grid": line.police_grid,
+                    "neighborhood_number": line.neighborhood_number,
+                    "block": line.block
+                };
+            });
 
-            returnObject.push(incident); 
+            res.status(200).json(returnObject);
+        })
+        .catch((error) => {
+            console.error(error);
+            res.status(500).send("Internal Server Error");
         });
-        res.status(200).type('json').send(returnObject);
+});
 
-    });
-    });
 
 // PUT request handler for new crime incident
 app.put('/new-incident', (req, res) => {

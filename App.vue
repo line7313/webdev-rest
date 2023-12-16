@@ -11,8 +11,10 @@ const incidentFilter = ref({
   Narcotics: false,
   Assault: false,
   Theft: false,
-  Other: false
+  Other: false,
 });
+
+
 
 const neighborhoodFilter = ref({
   1: false,
@@ -135,21 +137,19 @@ function closeDialog() {
 
 // Function for checking which filter has been selected
 function generateConditions(filters) {
+  const conditionMap = {
+    vandalism: 'between 1400 and 1430',
+    theft: 'between 600 and 693',
+    narcotics: 'between 1800 and 1885',
+    assault: 'between 400 and 863 and incident LIKE "%assau%"',
+  };
   const conditions = [];
 
   for (const [key, value] of Object.entries(filters)) {
-    if (value === true) {
-      if (key.toLowerCase() === 'vandalism') {
-        conditions.push('BETWEEN 1400 AND 1430');
-      } else if (key.toLowerCase() === 'theft') {
-        conditions.push('BETWEEN 600 AND 693');
-      } else if (key.toLowerCase() === 'narcotics') {
-        conditions.push('BETWEEN 1800 AND 1885');
-      } else if (key.toLowerCase() === 'assault') {
-        conditions.push('BETWEEN 400 AND 863 AND incident LIKE "%assau%"');
-      } else {
-        conditions.push(`neighborhood = '${key}'`);
-      }
+    if (value && conditionMap[key.toLowerCase()]) {
+      conditions.push("code="+conditionMap[key.toLowerCase()]);
+    } else if (value) {
+      conditions.push(`neighborhood_number=${key}`);
     }
   }
 
@@ -161,6 +161,9 @@ function updateFilter() {
   const selectedIncidents = generateConditions(incidentFilter.value);
   const selectedNeighborhoods = generateConditions(neighborhoodFilter.value);
 
+  console.log(selectedIncidents)
+  console.log(selectedNeighborhoods)
+  console.log("********************************")
 
   let finalCodeCondition = '';
 
@@ -170,20 +173,23 @@ function updateFilter() {
 
   if (selectedNeighborhoods.length > 0) {
     if (finalCodeCondition !== '') {
+      console.log("does it work here")
       finalCodeCondition += ' AND ';
     }
     finalCodeCondition += selectedNeighborhoods;
   }
 
   if (finalCodeCondition == '') {
+    console.log("I doubttttttttttttttttttttttttt")
     finalCodeCondition = 'limit=1000';
   }
   console.log(`This is the start-----------------------------------------------`)
   console.log(finalCodeCondition);
   console.log(`This is the end-----------------------------------------------`)
   //initial_crimes = ref('');
-  
-  fetch(`${crime_url.value}/incidents?limit=10`)
+  const filterUrl= "http://localhost:8000/incidents?"+finalCodeCondition
+  console.log(filterUrl)
+  fetch(filterUrl)
     .then((response) => {
       console.log(`that it even get hereeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee`);
       if (!response.ok) {
@@ -257,6 +263,7 @@ function updateFilter() {
             <th>Time</th>
             <th>Incident</th>
             <th>Case Number</th>
+            <th>Neighborhood Number</th>
           </tr>
         </thead>
         <tbody>
@@ -266,6 +273,7 @@ function updateFilter() {
             <td>{{ crime.time }}</td>
             <td>{{ crime.incident }}</td>
             <td>{{ crime.case_number }}</td>
+            <td>{{ crime.neighborhood_number }}</td>
           </tr>
         </tbody>
       </table>
