@@ -5,6 +5,18 @@ let crime_url = ref('http://localhost:8000');
 let dialog_err = ref(false);
 let initial_crimes = ref([]);
 let isLoading = ref(true);
+let submitError = ref(null);
+
+let newCrime = ref({
+  "case_number": "",
+  "code": "",
+  "incident": "",
+  "police_grid": "",
+  "neighborhood_number": null,
+  "block": "",
+  "date": "",
+  "time": ""
+})
 
 //incident filter
 const incidentFilter = ref({
@@ -13,8 +25,6 @@ const incidentFilter = ref({
   Theft: false,
   Other: false,
 });
-
-
 
 const neighborhoodFilter = ref({
   1: false,
@@ -120,6 +130,32 @@ function initializeCrimes() {
     })
 }
 
+function submitNewCrime() {  
+  //curl -X PUT -H "Content-Type: application/json" -d "{\"case_number\": \"123456\",\"code\": \"99999\",\"incident\": \"Theft\",\"police_grid\": \"ABC\",\"neighborhood_number\": 123,\"block\": \"XYZ\",\"date\": \"2023-12-15\",\"time\": \"12:34:56\"}" "http://localhost:8000/new-incident"
+  fetch('http://localhost:8000/new-incident', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(newCrime.value),
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    console.log(response);
+  })
+  .then(data => {
+    submitError.value = false;
+    console.log("HERRE");
+    console.log(data);
+  })
+  .catch(err => {
+    console.log("HER");
+    submitError.value = true;
+    console.error(err);
+  });
+}
 // Function called when user presses 'OK' on dialog box
 function closeDialog() {
   let dialog = document.getElementById('rest-dialog');
@@ -227,9 +263,46 @@ function updateFilter() {
     </div>
   </div>
 
-  <div>
-    <form>
-      <!--Will add report a crime form here -->
+
+  <div class="input-form-container">
+
+    <div class="center">
+      <b v-if="!submitError">
+        Successfully Reported Crime
+      </b>
+
+      <b v-if="submitError">
+        Error Reporting Crime
+      </b>
+    </div>
+
+    <form @submit="submitNewCrime" class="input-form">
+      <div class="center"><b>Report a Crime</b></div>
+      <label for="caseNumber">Case Number:</label>
+      <input type="text" id="caseNumber" v-model="newCrime.case_number" required>
+
+      <label for="code">Code:</label>
+      <input type="text"  id="code" v-model="newCrime.code" required>
+
+      <label for="incident">Incident:</label>
+      <input type="text" id="incident" v-model="newCrime.incident" required>
+
+      <label for="police_grid">Police Grid:</label>
+      <input type="text"  id="police_grid" v-model="newCrime.police_grid" required>
+
+      <label for="neighborhood_number">Neighborhood Number:</label>
+      <input type="number"  id="neightborhood_number" v-model="newCrime.neighborhood_number" required>
+
+      <label for="block">Block:</label>
+      <input type="text" id="block" v-model="newCrime.block" required>
+
+      <label for="date">Date:</label>
+      <input type="text" id="date" v-model="newCrime.date" required>
+
+      <label for="time">Time:</label>
+      <input type="text" id="time" v-model="newCrime.time" required>
+
+      <button type="submit" class="submit-button">Submit</button>
     </form>
   </div>
 
@@ -315,4 +388,28 @@ function updateFilter() {
   font-size: 1rem;
   color: #D32323;
 }
+
+.input-form-container {
+  width: 33.33%;
+  margin-top: 5rem;
+  margin-left: 5rem;
+  padding: 1rem;
+}
+
+.input-form {
+  border: solid black 1px;
+  padding: 1rem;
+
+}
+
+.submit-button {
+  background-color: rgb(30, 30, 141);
+  color: white;
+  padding: 0.5rem;
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+  }
 </style>
