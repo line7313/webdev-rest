@@ -120,6 +120,21 @@ app.get('/neighborhoods', (req, res) => {
     });   
 });
 
+//Get crimes per neighborhood
+app.get('/neighborhood_stats', (req, res) => {
+    let query = 'SELECT neighborhood_number, COUNT(*) FROM Incidents GROUP BY neighborhood_number;';
+    console.log(query);
+
+    dbSelect(query, [])
+    .then((data) => {
+        data.forEach((line) => {
+            line = jsonReplace(line, "neighborhood_number", "id"); // Rename keys
+            line = jsonReplace(line, "COUNT(*)", "crimes");
+        });
+        res.status(200).type('json').send(data);
+    });   
+})
+
 // GET request handler for crime incidents
 app.get('/incidents', (req, res) => {    
     let queryParams = req.query;
