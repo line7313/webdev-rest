@@ -182,6 +182,20 @@ app.get('/incidents', (req, res) => {
         constructedParams.push(constructedParam);
     }
 
+
+    if (queryParams.hasOwnProperty("incident")) {
+        let incidentss = queryParams.incident.split(",");
+        constructedParam = "( ";
+
+        incidentss.forEach((incident) => {
+            incidentss[incidentss.length - 1] != incident ? constructedParam += "incident = ? OR " : constructedParam += "incident = ? )"; // Construct query string
+            params.push(incident);
+        });
+
+        constructedParams.push(constructedParam);
+    }
+
+    
     if (queryParams.hasOwnProperty("neighborhood")) {
         let neighborhoods = queryParams.neighborhood.split(",");
         constructedParam = "( ";

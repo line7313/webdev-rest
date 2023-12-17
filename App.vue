@@ -42,9 +42,19 @@ let addressGeolocation = ref({})
 //incident filter
 const incidentFilter = ref({
   Narcotics: false,
-  Assault: false,
+  Vandalism: false,
   Theft: false,
-  Other: false,
+  Proactive_Police_Visit: false,
+  Robbery: false,
+  Criminal_Damage: false,
+  Burglary: false,
+  Agg_Assault_Dom : false,
+  Simple_Assault_Dom: false,
+  Community_Event: false,
+  Agg_Assault: false,
+  Auto_Theft: false,
+  Discharge: false,
+
 });
 
 const curMapBounds = ref({
@@ -295,30 +305,41 @@ function getCoordsFromAddress(address) {
     });
 }
 
-// Function for checking which filter has been selected
 function generateConditions(filters) {
   const conditionMap = {
-    vandalism: 'between 1400 and 1430',
-    theft: 'between 600 and 693',
-    narcotics: 'between 1800 and 1885',
-    assault: 'between 400 and 863',
+    theft: 'Theft',
+    vandalism: 'Vandalism',
+    narcotics: 'Narcotics',
+    proactive_police_visit: 'Proactive Police Visit',
+    robbery: 'Robbery',
+    criminal_damage: 'Criminal Damage',
+    burglary: 'Burglary',
+    agg_assault_dom : 'Agg. Assault Dom.',
+    simple_assault_dom: 'Simple Assault Dom.',
+    community_event: 'Community Event',
+    agg_assault: 'Agg. Assault',
+    auto_theft: 'Auto Theft',
+    discharge: 'Discharge ',
+
   };
   const conditions = [];
 
-  //checking which checkbox is checked or not and pushing
   for (const [key, value] of Object.entries(filters)) {
     if (value && conditionMap[key.toLowerCase()]) {
-      conditions.push(`code=${conditionMap[key.toLowerCase()]}`);
+      conditions.push(`incident=${conditionMap[key.toLowerCase()]}`);
     } else if (value) {
-      conditions.push(`neighborhood_number=${key}`);
+      let condition;
+      condition = `${key}`;
+      conditions.push(condition);
     }
   }
-  console.log("This is what gets sent")
-  console.log(conditions)
-  console.log("************************************")
+
+  console.log("!!!!!!!!!!!!!!!!!!!!"+conditions)
 
   return conditions;
 }
+
+
 
 function inRange(x, min, max) {
     return ((x-min)*(x-max) <= 0);
@@ -327,8 +348,8 @@ function inRange(x, min, max) {
 function updateFilter() {
   const selectedIncidents = generateConditions(incidentFilter.value);
   const selectedNeighborhoods = generateConditions(neighborhoodFilter.value);
-  const mapBounds = curMapBounds.value
-  console.log(mapBounds)
+  const mapBounds = curMapBounds.value;
+  console.log(mapBounds);
 
   let finalCodeCondition = '';
 
@@ -337,10 +358,11 @@ function updateFilter() {
   }
 
   if (selectedNeighborhoods.length > 0) {
-    const neighborhoodCondition = selectedNeighborhoods.length > 1 ? `${selectedNeighborhoods.join(' OR ')}` : selectedNeighborhoods[0];
+    const neighborhoodCondition = selectedNeighborhoods.length > 1 ? `neighborhood=${selectedNeighborhoods.join(',')}` : `neighborhood=${selectedNeighborhoods[0]}`;
+
 
     if (finalCodeCondition) {
-      finalCodeCondition += ` AND ${neighborhoodCondition}`;
+      finalCodeCondition += `&${neighborhoodCondition}`;
     } else {
       finalCodeCondition = neighborhoodCondition;
     }
@@ -371,6 +393,7 @@ function updateFilter() {
       console.log(err);
     });
 }
+
 
 function deleteRow(id) {
   const deleteUrl = `${crime_url.value}/remove-incident`;
