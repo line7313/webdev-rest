@@ -6,7 +6,6 @@ const nominatim_url = ref('https://nominatim.openstreetmap.org');
 let dialog_err = ref(false);
 let initial_crimes = ref([]);
 let isLoading = ref(true);
-let submitError = ref(null);
 let agent = ref(navigator.userAgent);
 
 const incidentColor = ref({
@@ -188,7 +187,6 @@ function initializeCrimes() {
 
 
 function submitNewCrime() {  
-  //curl -X PUT -H "Content-Type: application/json" -d "{\"case_number\": \"123456\",\"code\": \"99999\",\"incident\": \"Theft\",\"police_grid\": \"ABC\",\"neighborhood_number\": 123,\"block\": \"XYZ\",\"date\": \"2023-12-15\",\"time\": \"12:34:56\"}" "http://localhost:8000/new-incident"
   fetch('http://localhost:8000/new-incident', {
     method: 'PUT',
     headers: {
@@ -203,13 +201,9 @@ function submitNewCrime() {
     console.log(response);
   })
   .then(data => {
-    submitError.value = false;
-    console.log("HERRE");
     console.log(data);
   })
   .catch(err => {
-    console.log("HER");
-    submitError.value = true;
     console.error(err);
   });
 }
@@ -329,6 +323,13 @@ function updateFilter() {
 </script>
 
 <template>
+  
+  <div class="about-project">
+    <a href="./public/html/aboutProject.html" target="_blank">About the Project</a>
+  </div>
+  <br>
+  <br>
+
   <dialog id="rest-dialog" open>
     <h1 class="dialog-header">St. Paul Crime REST API</h1>
     <label class="dialog-label">URL: </label>
@@ -346,16 +347,6 @@ function updateFilter() {
 
 
   <div class="input-form-container">
-
-    <div class="center">
-      <b v-if="!submitError">
-        Successfully Reported Crime
-      </b>
-
-      <b v-if="submitError">
-        Error Reporting Crime
-      </b>
-    </div>
 
     <form @submit="submitNewCrime" class="input-form">
       <div class="center"><b>Report a Crime</b></div>
@@ -492,5 +483,11 @@ function updateFilter() {
 .center {
   display: flex;
   justify-content: center;
+  }
+
+  .about-project {
+    margin-left: 43%;
+    margin-top: 1rem;
+    font-weight: bold;  
   }
 </style>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Three Equal Columns</title>
+</head>
+<body>
+
+<div class="container">
+    <div class="column">
+        <span style="margin-left:30%;">About Alec
+        </span>
+        <br>
+        <br>
+        <img src="../photos/headshot.jpg" alt="Jackson headshot"  style="margin-left: 15%">
+        <br>
+        <br>
+        <p>
+            Alecs bio
+        </p>
+      </div>
+      <div class="column">
+        <span style="margin-left:30%;">About Prince
+        </span>
+        <br>
+        <br>
+        <img src="../photos/headshot.jpg" alt="Jackson headshot"  style="margin-left: 15%">
+        <br>
+        <br>
+        <p>
+            Princes bio
+        </p>
+      </div>
+  <div class="column">
+    <span style="margin-left:30%;">About Jackson
+    </span>
+    <br>
+    <br>
+    <img src="../photos/headshot.jpg" alt="Jackson headshot"  style="margin-left: 15%">
+    <br>
+    <br>
+    <p>
+        I am a computer engineering undergraduate and plan on working as a software engineer
+        after graduation. I have both a computer science and a busniness minor.
+    </p>
+  </div>
+</div>
+<br>
+<br> 
+<div style="margin-left: 2rem">
+    <b>
+        Description of frameworks and APIs used
+    </b>
+    <br>
+    <p>
+        The JavaScript framework Vue 3 was used for the frontend of this project. Node.js was used
+        for the backend / querying the database. The express Node.js framework Express was used to
+        develop our custom API. The public Nominatim API was used by the frontend to search for
+        locations by name and the retrieval of coordinates. This was needed for to render the map
+        properly and update the table as users scroll around on the map.
+    </p>
+
+    <br>
+    <br>
+    <b>
+        Video Demo
+    </b>
+    <br>
+    <br>
+    <b>
+        Six Things That We Learned
+    </b>
+
+    <ol>
+        <li>
+            Vue is reactive. Updating ref.value from the script propogates the change into the template.
+        </li>
+        <li>
+            JSON.stringify() can be used to send an object as the body for a PUT request.
+        </li>
+        <li>
+            Adding forms in Vue is extremely easy and adding the "required" property on an input
+            will result in an error message box appearing on the input if a user trys to submit
+            the form with that input empty.
+        </li>
+    </ol>
+</div>
+
+
+
+</body>
+</html>
+
+<style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      display: flex;
+    }
+
+    .column {
+      flex: 1;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      border: 1px solid;
+      box-sizing: border-box;
+    }
+
+    .column-center {
+        margin-left: 30%;
+    }
+
+
+   
+  </style>
