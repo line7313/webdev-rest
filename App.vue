@@ -8,21 +8,23 @@ let initial_crimes = ref([]);
 let isLoading = ref(true);
 let submitError = ref(null);
 let agent = ref(navigator.userAgent);
+let pan_err = ref(false)
+let pan_err_msg = ref("")
 
 const incidentColor = ref({
-  "Narcotics": "palegreen",
-  "Assualt": "gainsboro",
-  "Theft": "palegoldenrod",
+  "Narcotics": "greenyellow",
+  "Assualt": "salmon",
+  "Theft": "khaki",
   "Proactive Police Visit": "lightskyblue",
-  "Robbery": "lightyellow",
+  "Robbery": "khaki",
   "Criminal Damage": "khaki",
-  "Burglary": "lemonchiffon",
-  "Agg. Assault Dom." : "violet",
-  "Simple Assault Dom.": "plum",
-  "Community Event": "gainsboro",
-  "Agg. Assault": "hotpink",
-  "Auto Theft": "salmon",
-  "Discharge": "ivory"
+  "Burglary": "khaki",
+  "Agg. Assault Dom." : "salmon",
+  "Simple Assault Dom.": "salmon",
+  "Community Event": "lightskyblue",
+  "Agg. Assault": "salmon",
+  "Auto Theft": "khaki",
+  "Discharge": "lightskyblue"
 })
 
 let newCrime = ref({
@@ -50,6 +52,8 @@ const curMapBounds = ref({
   ne: null,
   sw: null
 })
+
+const mapCenter = ref({lat: null, lon: null})
 
 const neighborhoodFilter = ref({
   1: false,
@@ -125,14 +129,49 @@ onMounted(() => {
     // console.log(map.leaflet.getBounds())
     curMapBounds.ne = map.leaflet.getBounds()["_northEast"]
     curMapBounds.sw = map.leaflet.getBounds()["_southWest"]
+    mapCenter.lat = map.leaflet.getCenter()["lat"]
+    mapCenter.lon = map.leaflet.getCenter()["lng"]
+    document.getElementById("latInput").placeholder = mapCenter.lat
+    document.getElementById("lonInput").placeholder = mapCenter.lon
+
     });
 
   // Get boundaries for St. Paul neighborhoods
   let district_boundary = new L.geoJson();
 
   // set map bounds refs
-    curMapBounds.ne = map.leaflet.getBounds()["_northEast"]
-    curMapBounds.sw = map.leaflet.getBounds()["_southWest"]
+  curMapBounds.ne = map.leaflet.getBounds()["_northEast"]
+  curMapBounds.sw = map.leaflet.getBounds()["_southWest"]
+  mapCenter.lat = map.leaflet.getCenter()["lat"]
+  mapCenter.lon = map.leaflet.getCenter()["lng"]
+
+  document.getElementById("pan-button").addEventListener("click", function goToCoordinates() {
+    let lat = document.getElementById("latInput").value.trim()
+    let lon = document.getElementById("lonInput").value.trim()
+    if (lat.length == 0) {
+      lat = mapCenter.lat
+    }
+    if (lon.length == 0) {
+      lon = mapCenter.lon
+    }
+    if ((isNaN(lat) || isNaN(lon))) {
+      console.log("Not a number")
+      pan_err_msg.value = "Invalid input"
+      pan_err.value = true
+      return
+    }
+    lat = parseFloat(lat)
+    lon = parseFloat(lon)
+    if (!inRange(lat, map.bounds.se.lat, map.bounds.nw.lat) || !inRange(lon, map.bounds.nw.lng, map.bounds.se.lng)) {
+      console.log("invalid input for " + lat + " " + lon)
+      pan_err_msg.value = "coordinates not in map bounds"
+      pan_err.value = true
+      return
+    }
+    console.log("pan to " +lat + ", " + lon)
+    map.leaflet.panTo([lat, lon])
+  });
+
 
   district_boundary.addTo(map.leaflet);
   fetch('data/StPaulDistrictCouncil.geojson')
@@ -167,7 +206,6 @@ function fetchData(url,params) {
       return response.json();
     })  
 }
-
 
 // FUNCTIONS
 // Function called once user has entered REST API URL
@@ -274,6 +312,37 @@ function generateConditions(filters) {
   return conditions;
 }
 
+function inRange(x, min, max) {
+    return ((x-min)*(x-max) <= 0);
+}
+
+// function goToCoordinates() {
+//   let lat = document.getElementById("latInput").value.trim()
+//   let lon = document.getElementById("lonInput").value.trim()
+//   if (lat.length == 0) {
+//     lat = mapCenter.lat
+//   }
+//   if (lon.length == 0) {
+//     lon = mapCenter.lon
+//   }
+//   if ((isNaN(lat) || isNaN(lon))) {
+//     console.log("Not a number")
+//     pan_err_msg.value = "Invalid input"
+//     pan_err.value = true
+//     return
+//   }
+//   lat = parseFloat(lat)
+//   lon = parseFloat(lon)
+//   if (!inRange(lat, map.bounds.se.lat, map.bounds.nw.lat) || !inRange(lon, map.bounds.nw.lng, map.bounds.se.lng)) {
+//     console.log("invalid input for " + lat + " " + lon)
+//     pan_err_msg.value = "coordinates not in map bounds"
+//     pan_err.value = true
+//     return
+//   }
+//   console.log("pan to " +lat + ", " + lon)
+//   // map.leaflet.panToCoords(lat, lon)
+//   }
+
 
 function updateFilter() {
   const selectedIncidents = generateConditions(incidentFilter.value);
@@ -317,9 +386,6 @@ function updateFilter() {
     .then((result) => {
       initial_crimes.value = result;
       console.log(initial_crimes.value);
-      // initial_crimes.value.forEach((crime) => {
-      //   getCoordsFromAddress(crime["block"])
-      // })
     })
     .catch((err) => {
       console.log(err);
@@ -343,6 +409,15 @@ function updateFilter() {
       <div id="leafletmap" class="cell auto"></div>
     </div>
   </div>
+
+    <div class="center">
+      <p class="dialog-error" v-if="pan_err">{{pan_err_msg}}</p>
+        <label for="lat">Latitude:</label>
+        <input type="text" id="latInput" name="latInput">
+        <label for="lon">Longitude:</label>
+        <input type="text" id="lonInput" name="lonInput">
+        <button id="pan-button" class="button" type="button" @click="goToCoordinates">Go!</button>
+    </div>
 
 
   <div class="input-form-container">
