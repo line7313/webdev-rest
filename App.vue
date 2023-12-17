@@ -285,9 +285,7 @@ function generateConditions(filters) {
     vandalism: 'between 1400 and 1430',
     theft: 'between 600 and 693',
     narcotics: 'between 1800 and 1885',
-    assault: 'between 400 and 863 and incident LIKE "%assau%"',
-    //might take this out
-    other: 'NOT BETWEEN 1400 AND 1430 AND code NOT BETWEEN 600 AND 693 AND code NOT BETWEEN 1800 AND 1885 AND code NOT BETWEEN 400 AND 863'
+    assault: 'between 400 and 863',
   };
   const conditions = [];
 

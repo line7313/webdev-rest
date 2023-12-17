@@ -136,13 +136,28 @@ app.get('/incidents', (req, res) => {
     if (queryParams.hasOwnProperty("code")) {
         let codes = queryParams.code.split(",");
         constructedParam = "( ";
-
+    
         codes.forEach((code) => {
-            codes[codes.length - 1] != code ? constructedParam += "case_number = ? OR " : constructedParam += "case_number = ? )"; // Construct query string
-            params.push(code);
+            if (code.includes("between")) {
+                // Handle range query
+                const rangeValues = code.split("between")[1].split("and").map(value => value.trim());
+                constructedParam += "(code BETWEEN ? AND ?) OR ";
+                params.push(rangeValues[0], rangeValues[1]);
+            } else {
+                constructedParam += "code = ? OR ";
+                params.push(code.trim());
+            }
         });
+    
+        // Remove the trailing " OR " if it exists
+        if (constructedParam.endsWith(" OR ")) {
+            constructedParam = constructedParam.slice(0, -4);
+        }
+    
+        constructedParam += " )";
         constructedParams.push(constructedParam);
     }
+    
 
     if (queryParams.hasOwnProperty("end_date")) {
         constructedParam = "date_time <= '" + queryParams.end_date + "T23:59:59'";
