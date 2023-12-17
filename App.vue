@@ -326,15 +326,14 @@ function generateConditions(filters) {
 
   for (const [key, value] of Object.entries(filters)) {
     if (value && conditionMap[key.toLowerCase()]) {
-      conditions.push(`incident=${conditionMap[key.toLowerCase()]}`);
+      //let incidentCondition= conditionMap[key.toLowerCase()]
+      conditions.push(`${conditionMap[key.toLowerCase()]}`);
     } else if (value) {
       let condition;
       condition = `${key}`;
       conditions.push(condition);
     }
   }
-
-  console.log("!!!!!!!!!!!!!!!!!!!!"+conditions)
 
   return conditions;
 }
@@ -354,7 +353,7 @@ function updateFilter() {
   let finalCodeCondition = '';
 
   if (selectedIncidents.length > 0) {
-    finalCodeCondition = selectedIncidents.length > 1 ? `${selectedIncidents.join(' OR ')}` : selectedIncidents[0];
+    finalCodeCondition = selectedIncidents.length > 1 ? `incident=${selectedIncidents.join(',')}` : `incident=${selectedIncidents[0]}`;
   }
 
   if (selectedNeighborhoods.length > 0) {

@@ -199,16 +199,23 @@ app.get('/incidents', (req, res) => {
 
 
     if (queryParams.hasOwnProperty("incident")) {
-        let incidentss = queryParams.incident.split(",");
-        constructedParam = "( ";
-
-        incidentss.forEach((incident) => {
-            incidentss[incidentss.length - 1] != incident ? constructedParam += "incident = ? OR " : constructedParam += "incident = ? )"; // Construct query string
-            params.push(incident);
+        let incidents = queryParams.incident.split(",");
+        constructedParam = "(incident IN (";
+    
+        incidents.forEach((incident, index) => {
+            constructedParam += "?,";
+            params.push(incident.trim());
+    
+            // Check if it's the last element to avoid adding a comma after the last value
+            if (index === incidents.length - 1) {
+                constructedParam = constructedParam.slice(0, -1); // Remove the trailing comma
+                constructedParam += "))";
+            }
         });
-
+    
         constructedParams.push(constructedParam);
     }
+    
 
     
     if (queryParams.hasOwnProperty("neighborhood")) {
