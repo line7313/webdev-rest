@@ -124,16 +124,30 @@ onMounted(() => {
   }).addTo(map.leaflet);
   map.leaflet.setMaxBounds([[44.883658, -93.217977], [45.008206, -92.993787]]);
 
-  map.leaflet.on('move', function onDragEnd(){
-    // console.log(map.leaflet.getBounds())
+  // map.leaflet.on('move', function onDragEnd(){
+  //   // console.log(map.leaflet.getBounds())
+  //   curMapBounds.ne = map.leaflet.getBounds()["_northEast"]
+  //   curMapBounds.sw = map.leaflet.getBounds()["_southWest"]
+  //   mapCenter.lat = map.leaflet.getCenter()["lat"]
+  //   mapCenter.lon = map.leaflet.getCenter()["lng"]
+  //   document.getElementById("latInput").placeholder = mapCenter.lat
+  //   document.getElementById("lonInput").placeholder = mapCenter.lon
+  //   });
+
+  map.leaflet.on('move', function onDragEnd() {
+    updateMapParams()
+  });
+
+  function updateMapParams() {
     curMapBounds.ne = map.leaflet.getBounds()["_northEast"]
     curMapBounds.sw = map.leaflet.getBounds()["_southWest"]
     mapCenter.lat = map.leaflet.getCenter()["lat"]
     mapCenter.lon = map.leaflet.getCenter()["lng"]
     document.getElementById("latInput").placeholder = mapCenter.lat
     document.getElementById("lonInput").placeholder = mapCenter.lon
+  }
 
-    });
+
 
   // Get boundaries for St. Paul neighborhoods
   let district_boundary = new L.geoJson();
@@ -144,6 +158,7 @@ onMounted(() => {
   mapCenter.lat = map.leaflet.getCenter()["lat"]
   mapCenter.lon = map.leaflet.getCenter()["lng"]
 
+  //Map pan function
   document.getElementById("pan-button").addEventListener("click", function goToCoordinates() {
     let lat = document.getElementById("latInput").value.trim()
     let lon = document.getElementById("lonInput").value.trim()
@@ -169,6 +184,7 @@ onMounted(() => {
     }
     console.log("pan to " +lat + ", " + lon)
     map.leaflet.panTo([lat, lon])
+    updateMapParams()
   });
 
 
@@ -310,34 +326,6 @@ function inRange(x, min, max) {
     return ((x-min)*(x-max) <= 0);
 }
 
-// function goToCoordinates() {
-//   let lat = document.getElementById("latInput").value.trim()
-//   let lon = document.getElementById("lonInput").value.trim()
-//   if (lat.length == 0) {
-//     lat = mapCenter.lat
-//   }
-//   if (lon.length == 0) {
-//     lon = mapCenter.lon
-//   }
-//   if ((isNaN(lat) || isNaN(lon))) {
-//     console.log("Not a number")
-//     pan_err_msg.value = "Invalid input"
-//     pan_err.value = true
-//     return
-//   }
-//   lat = parseFloat(lat)
-//   lon = parseFloat(lon)
-//   if (!inRange(lat, map.bounds.se.lat, map.bounds.nw.lat) || !inRange(lon, map.bounds.nw.lng, map.bounds.se.lng)) {
-//     console.log("invalid input for " + lat + " " + lon)
-//     pan_err_msg.value = "coordinates not in map bounds"
-//     pan_err.value = true
-//     return
-//   }
-//   console.log("pan to " +lat + ", " + lon)
-//   // map.leaflet.panToCoords(lat, lon)
-//   }
-
-
 function updateFilter() {
   const selectedIncidents = generateConditions(incidentFilter.value);
   const selectedNeighborhoods = generateConditions(neighborhoodFilter.value);
@@ -384,6 +372,28 @@ function updateFilter() {
     .catch((err) => {
       console.log(err);
     });
+}
+
+function deleteRow(id) {
+  const deleteUrl = `${crime_url.value}/remove-incident`;
+  const body = JSON.stringify({"case_number": parseInt(id)})
+  console.log(body)
+  console.log(deleteUrl)
+  fetch(deleteUrl, {
+    method: "DELETE",
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: body
+  })
+    .then((response) => {
+      if (!response.ok) {
+        alert(`Failed to delete case #${id}`)
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      alert(`Deleted case #${id}`)
+      updateFilter()
+    })
 }
 
 </script>
@@ -494,6 +504,8 @@ function updateFilter() {
             <td>{{ crime.incident }}</td>
             <td>{{ crime.case_number }}</td>
             <td>{{ crime.neighborhood_number }}</td>
+            <button id="delete-button" class="button" type="button" @click="deleteRow(crime.case_number)"
+            >Delete</button>
           </tr>
         </tbody>
       </table>
