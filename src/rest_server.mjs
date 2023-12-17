@@ -74,14 +74,13 @@ app.get('/codes', (req, res) => {
     if (queryParams.hasOwnProperty("code")) {
         let codes = queryParams.code.split(",");
         query = 'SELECT * FROM Codes WHERE ';
-        
+
         codes.forEach((code) => {
             codes[codes.length - 1] != code ? query += "code = ? OR " : query += "code = ?"; // Construct query string
             params.push(code);
         });
     }
-    console.log(params)
-    console.log(query)
+
     dbSelect(query, params)
     .then((data) => {
         data.forEach((line) => {
@@ -122,12 +121,13 @@ app.get('/neighborhoods', (req, res) => {
 });
 
 // GET request handler for crime incidents
-app.get('/incidents', (req, res) => {
+app.get('/incidents', (req, res) => {    
     let queryParams = req.query;
     let query = 'SELECT * FROM Incidents ';
     let params = [];
     let constructedParams = [];
     let limit = 1000;
+    let constructedParam = "";
 
     if (queryParams.hasOwnProperty("limit")) {
         limit = queryParams.limit;
@@ -135,118 +135,88 @@ app.get('/incidents', (req, res) => {
 
     if (queryParams.hasOwnProperty("code")) {
         let codes = queryParams.code.split(",");
-        query = 'SELECT * FROM Incidents WHERE ';
+        constructedParam = "( ";
 
-        codes.forEach((code, index) => {
-            console.log(code.includes("neighborhood_number"))
-            if (code.includes("between")) {
-                // Handle range query
-                const rangeValues = code.split("between")[1].split("and").map(value => value.trim());
-                query += "(code BETWEEN ? AND ?) OR ";
-                if (query.endsWith(" OR ")) {
-                    query = query.slice(0, -4);
-                }
-                params.push(rangeValues[0], rangeValues[1]);
-            }
-            //if there is neighborhood_number included in the query 
-             if (code.includes("neighborhood_number")) {
-                // Handle neighborhood_number
-                const neighborhoodValue = code.split("=")[1].trim();
-                query += " AND (neighborhood_number = ?)  ";
-                console.log("_______________"+query)
-                params.push(neighborhoodValue);
-            } else {
-                // Treat single code as a range (e.g., 400 as between 400 and 600)
-                query += "(code BETWEEN ? AND ?) OR ";
-                params.push(code.trim(), (parseInt(code.trim()) + 200).toString());
-            }
+        codes.forEach((code) => {
+            codes[codes.length - 1] != code ? constructedParam += "case_number = ? OR " : constructedParam += "case_number = ? )"; // Construct query string
+            params.push(code);
         });
-
-        // Remove the trailing " OR " if it exists
-        if (query.endsWith(" OR ")) {
-            query = query.slice(0, -4);
-        }
+        constructedParams.push(constructedParam);
     }
-
 
     if (queryParams.hasOwnProperty("end_date")) {
-        constructedParams.push("date_time <= ?");
-        params.push(queryParams.end_date + "T23:59:59");
-    }
+        constructedParam = "date_time <= '" + queryParams.end_date + "T23:59:59'";
+        constructedParams.push(constructedParam);
+    }  
+
 
     if (queryParams.hasOwnProperty("start_date")) {
-        constructedParams.push("date_time >= ?");
-        params.push(queryParams.start_date);
-    }
+        constructedParam = "date_time >= '" + queryParams.start_date + "'";
+        constructedParams.push(constructedParam);
+    }  
 
     if (queryParams.hasOwnProperty("grid")) {
         let grids = queryParams.grid.split(",");
-        let constructedParam = "( ";
+        constructedParam = "( ";
 
-        grids.forEach((grid, index) => {
-            constructedParam += "police_grid = ? OR ";
+        grids.forEach((grid) => {
+            grids[grids.length - 1] != grid ? constructedParam += "police_grid = ? OR " : constructedParam += "police_grid = ? )"; // Construct query string
             params.push(grid);
-
-            if (index === grids.length - 1) {
-                constructedParam = constructedParam.slice(0, -4); // Remove the trailing " OR "
-                constructedParam += ")";
-            }
         });
 
         constructedParams.push(constructedParam);
     }
 
-    if (queryParams.hasOwnProperty("neighborhood_number")) {
-        let neighborhoods = queryParams.neighborhood_number.split(",");
-        let constructedParam = "( ";
+    if (queryParams.hasOwnProperty("neighborhood")) {
+        let neighborhoods = queryParams.neighborhood.split(",");
+        constructedParam = "( ";
 
-        neighborhoods.forEach((neighborhood, index) => {
-            constructedParam += "neighborhood_number = ? OR ";
+        neighborhoods.forEach((neighborhood) => {
+            neighborhoods[neighborhoods.length - 1] != neighborhood ? constructedParam += "neighborhood_number = ? OR " : constructedParam += "neighborhood_number = ? )"; // Construct query string
             params.push(neighborhood);
-
-            if (index === neighborhoods.length - 1) {
-                constructedParam = constructedParam.slice(0, -4); // Remove the trailing " OR "
-                constructedParam += ")";
-            }
         });
 
         constructedParams.push(constructedParam);
     }
 
-    if (constructedParams.length > 0) {
-        query += "WHERE " + constructedParams.join(" AND ");
-    }
+    if ( constructedParams.length > 0 ) {
+        query += "WHERE ";
 
-    query += " ORDER BY date_time DESC LIMIT ?";
-    params.push(limit);
-    console.log(query)
+        constructedParams.forEach((constructedParam) => {
+            query += constructedParam;
+            if ( constructedParams[constructedParams.length - 1] != constructedParam ) {
+                query += " AND ";
+            }
+        });
+    } 
+
+    query += " ORDER BY date_time DESC LIMIT " + limit;
+    console.log(query);
 
     dbSelect(query, params)
-        .then((data) => {
-            let returnObject = data.map((line) => {
-                let dateTimeParsed = line.date_time.split("T"); // Separate date and time
-                let date = dateTimeParsed[0];
-                let time = dateTimeParsed[1];
-                return {
-                    "case_number": line.case_number,
-                    "date": date,
-                    "time": time,
-                    "code": line.code,
-                    "incident": line.incident,
-                    "police_grid": line.police_grid,
-                    "neighborhood_number": line.neighborhood_number,
-                    "block": line.block
-                };
-            });
+    .then((data) => {
+        let returnObject = [];
+        data.forEach((line) => {
+            let dateTimeParsed = line.date_time.split("T"); // Seperate date and time
+            let date = dateTimeParsed[0];
+            let time = dateTimeParsed[1];
+            let incident = { // Map to new indcident object
+                "case_number": line.case_number,
+                "date": date,
+                "time": time,
+                "code": line.code,
+                "incident": line.incident,
+                "police_grid": line.police_grid,
+                "neighborhood_number": line.neighborhood_number,
+                "block": line.block
+            };
 
-            res.status(200).json(returnObject);
-        })
-        .catch((error) => {
-            console.error(error);
-            res.status(500).send("Internal Server Error");
+            returnObject.push(incident); 
         });
-});
+        res.status(200).type('json').send(returnObject);
 
+    });
+    });
 
 // PUT request handler for new crime incident
 app.put('/new-incident', (req, res) => {
