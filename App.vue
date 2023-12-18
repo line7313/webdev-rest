@@ -13,20 +13,20 @@ let startDate= ref("")
 let endDate=ref("")
 
 const incidentColor = ref({
-  "Narcotics": "greenyellow",
-  "Assualt": "salmon",
-  "Vandalism": "khaki",
-  "Theft": "khaki",
+  "Narcotics": "red",
+  "Assualt": "brown",
+  "Vandalism": "purple",
+  "Theft": "purple",
   "Proactive Police Visit": "lightskyblue",
-  "Robbery": "khaki",
-  "Criminal Damage": "khaki",
-  "Burglary": "khaki",
-  "Agg. Assault Dom." : "salmon",
-  "Simple Assault Dom.": "salmon",
+  "Robbery": "purple",
+  "Criminal Damage": "purple",
+  "Burglary": "purple",
+  "Agg. Assault Dom." : "brown",
+  "Simple Assault Dom.": "brown",
   "Community Event": "lightskyblue",
-  "Agg. Assault": "salmon",
-  "Auto Theft": "khaki",
-  "Discharge": "lightskyblue"
+  "Agg. Assault": "brown",
+  "Auto Theft": "purple",
+  "Discharge": "green"
 })
 
 let newCrime = ref({
