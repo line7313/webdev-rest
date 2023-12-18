@@ -138,7 +138,7 @@ app.get('/neighborhood_stats', (req, res) => {
 // GET request handler for crime incidents
 app.get('/incidents', (req, res) => {    
     let queryParams = req.query;
-    let query = 'SELECT * FROM Incidents ';
+    let query = 'SELECT * FROM Incidents i ';
     let params = [];
     let constructedParams = [];
     let limit = 1000;
@@ -183,9 +183,6 @@ app.get('/incidents', (req, res) => {
         constructedParams.push(constructedParam);
     }  
 
-
-   
-
     if (queryParams.hasOwnProperty("grid")) {
         let grids = queryParams.grid.split(",");
         constructedParam = "( ";
@@ -198,7 +195,7 @@ app.get('/incidents', (req, res) => {
         constructedParams.push(constructedParam);
     }
 
-
+    
     if (queryParams.hasOwnProperty("incident")) {
         let incidents = queryParams.incident.split(",");
         constructedParam = "(incident IN (";
@@ -220,11 +217,12 @@ app.get('/incidents', (req, res) => {
 
     
     if (queryParams.hasOwnProperty("neighborhood")) {
+        query += ' JOIN neighborhoods n ON i.neighborhood_number = n.neighborhood_number ';
         let neighborhoods = queryParams.neighborhood.split(",");
         constructedParam = "( ";
 
         neighborhoods.forEach((neighborhood) => {
-            neighborhoods[neighborhoods.length - 1] != neighborhood ? constructedParam += "neighborhood_number = ? OR " : constructedParam += "neighborhood_number = ? )"; // Construct query string
+            neighborhoods[neighborhoods.length - 1] != neighborhood ? constructedParam += "neighborhood_name = ? OR " : constructedParam += "neighborhood_name = ? )"; // Construct query string
             params.push(neighborhood);
         });
 

@@ -11,6 +11,7 @@ let pan_err = ref(false)
 let pan_err_msg = ref("")
 let startDate= ref("")
 let endDate=ref("")
+let maxRows= ref(1000)
 
 const incidentColor = ref({
   "Narcotics": "red",
@@ -68,23 +69,23 @@ const curMapBounds = ref({
 const mapCenter = ref({lat: null, lon: null})
 
 const neighborhoodFilter = ref({
-  1: false,
-  2: false,
-  3: false,
-  4: false,
-  5: false,
-  6: false,
-  7: false,
-  8: false,
-  9: false,
-  10: false,
-  11: false,
-  12: false,
-  13: false,
-  14: false,
-  15: false,
-  16: false,
-  17: false
+  "Conway/Battlecreek/Highwood": false,
+  "Greater East Side": false,
+  "West Side": false,
+  "Dayton's Bluff": false,
+  "Payne/Phalen": false,
+  "North End": false,
+  "Thomas/Dale(Frogtown)": false,
+  "Summit/University": false,
+  "West Seventh": false,
+  "Como": false,
+  "Hamline/Midway": false,
+  "St. Anthony": false,
+  "Union Park": false,
+  "Macalester-Groveland": false,
+  "Highland": false,
+  "Summit Hill": false,
+  "Capitol River": false
 })
 
 let map = reactive(
@@ -309,7 +310,7 @@ function getCoordsFromAddress(address) {
 }
 
 function generateConditions(filters) {
-  const conditionMap = {
+  const incidentNames = {
     theft: 'Theft',
     vandalism: 'Vandalism',
     narcotics: 'Narcotics',
@@ -325,12 +326,13 @@ function generateConditions(filters) {
     discharge: 'Discharge ',
 
   };
+
+
   const conditions = [];
 
   for (const [key, value] of Object.entries(filters)) {
-    if (value && conditionMap[key.toLowerCase()]) {
-      //let incidentCondition= conditionMap[key.toLowerCase()]
-      conditions.push(`${conditionMap[key.toLowerCase()]}`);
+    if (value && incidentNames[key.toLowerCase()]) {
+      conditions.push(`${incidentNames[key.toLowerCase()]}`);
     } else if (value) {
       let condition;
       condition = `${key}`;
@@ -377,10 +379,12 @@ function updateFilter() {
 
   if (finalCodeCondition === '') {
     finalCodeCondition = 'limit=1000';
+  }else{
+    finalCodeCondition += `&limit=${maxRows.value}`;
   }
-
+console.log("_____________________________")
   console.log(finalCodeCondition);
-
+  console.log("_____________________________")
   const filterUrl = `http://localhost:8000/incidents?${finalCodeCondition}`;
 
   console.log(filterUrl);
@@ -531,14 +535,17 @@ function deleteRow(id) {
                </div>
                <div class="grid-x grid-padding-x" style="display: inline;">
                     <!-- Date filters -->
-                    <div class="cell small-auto large-12" style="background-color: #000000;">
+                    <div class="cell small-auto large-12" style="background-color: #000000; color: white;">
                      
                         <label for="startDate">Start Date:</label>
                         <input type="date" id="startDate" v-model="startDate" @input="updateFilter" />
 
                         <label for="endDate">End Date:</label>
                         <input type="date" id="endDate" v-model="endDate" @input="updateFilter" />
-                      
+
+                        <label class="cell" for="maxRows" style="color: white;">Number of Rows To Retrieve</label>
+                        <input class="cell" type="number" id="maxRows" v-model="maxRows" @input="updateFilter" />
+                        
                     </div>
                </div>
 
