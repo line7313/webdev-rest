@@ -9,6 +9,8 @@ let isLoading = ref(true);
 let agent = ref(navigator.userAgent);
 let pan_err = ref(false)
 let pan_err_msg = ref("")
+let startDate= ref("")
+let endDate=ref("")
 
 const incidentColor = ref({
   "Narcotics": "greenyellow",
@@ -367,6 +369,11 @@ function updateFilter() {
     }
   }
 
+  if (startDate.value && endDate.value) {
+    console.log(startDate.value + " " + endDate.value)
+    finalCodeCondition += `&start_date=${startDate.value}&end_date=${endDate.value}`;
+  }
+
   if (finalCodeCondition === '') {
     finalCodeCondition = 'limit=1000';
   }
@@ -500,6 +507,16 @@ function deleteRow(id) {
       <input type="checkbox" v-model="neighborhoodFilter[neighborhood]" @change="updateFilter" />
       {{ neighborhood }}
     </label>
+  </div>
+
+  <div>
+    <label for="startDate">Start Date:</label>
+    <input type="date" id="startDate" v-model="startDate" @input="updateFilter" />
+
+    <label for="endDate">End Date:</label>
+    <input type="date" id="endDate" v-model="endDate" @input="updateFilter" />
+
+    
   </div>
 
   <div>

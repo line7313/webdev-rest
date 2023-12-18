@@ -173,6 +173,10 @@ app.get('/incidents', (req, res) => {
         constructedParams.push(constructedParam);
     }
     
+    if (queryParams.hasOwnProperty("start_date")) {
+        constructedParam = "date_time >= '" + queryParams.start_date + "'";
+        constructedParams.push(constructedParam);
+    }  
 
     if (queryParams.hasOwnProperty("end_date")) {
         constructedParam = "date_time <= '" + queryParams.end_date + "T23:59:59'";
@@ -180,10 +184,7 @@ app.get('/incidents', (req, res) => {
     }  
 
 
-    if (queryParams.hasOwnProperty("start_date")) {
-        constructedParam = "date_time >= '" + queryParams.start_date + "'";
-        constructedParams.push(constructedParam);
-    }  
+   
 
     if (queryParams.hasOwnProperty("grid")) {
         let grids = queryParams.grid.split(",");
