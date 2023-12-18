@@ -15,6 +15,7 @@ let endDate=ref("")
 const incidentColor = ref({
   "Narcotics": "greenyellow",
   "Assualt": "salmon",
+  "Vandalism": "khaki",
   "Theft": "khaki",
   "Proactive Police Visit": "lightskyblue",
   "Robbery": "khaki",
@@ -426,136 +427,170 @@ function deleteRow(id) {
 </script>
 
 <template>
-  
-  <div class="about-project">
-    <a href="./public/html/aboutProject.html" target="_blank">About the Project</a>
-  </div>
-  <br>
-  <br>
 
-  <dialog id="rest-dialog" open>
-    <h1 class="dialog-header">St. Paul Crime REST API</h1>
-    <label class="dialog-label">URL: </label>
-    <input id="dialog-url" class="dialog-input" type="url" v-model="crime_url" placeholder="http://localhost:8000" />
-    <p class="dialog-error" v-if="dialog_err">Error: must enter valid URL</p>
-    <br />
-    <button class="button" type="button" @click="closeDialog">OK</button>
+  <div class="off-canvas-wrapper">
+       
+       <!-- Your page content lives here -->
+       <div class="off-canvas-content" data-off-canvas-content>
+           <!-- main content within a `grid-container` -->
+           <div class="grid-container">
 
-  </dialog>
-  <div class="grid-container ">
-    <div class="grid-x grid-padding-x">
-      <div id="leafletmap" class="cell auto"></div>
-    </div>
-  </div>
+            <div  class="about-project">
+            <h2 ><a href="./public/html/aboutProject.html" target="_blank" style="color: white;">About the Project</a></h2>
+          </div>
+          <br>
+          <br>
 
-    <div class="center">
-      <p class="dialog-error" v-if="pan_err">{{pan_err_msg}}</p>
-        <label for="lat">Latitude:</label>
-        <input type="text" id="latInput" name="latInput">
-        <label for="lon">Longitude:</label>
-        <input type="text" id="lonInput" name="lonInput">
-        <button id="pan-button" class="button" type="button" @click="goToCoordinates">Go!</button>
-    </div>
+          <dialog id="rest-dialog" open>
+            <h1 class="dialog-header">St. Paul Crime REST API</h1>
+            <label class="dialog-label">URL: </label>
+            <input id="dialog-url" class="dialog-input" type="url" v-model="crime_url" placeholder="http://localhost:8000" />
+            <p class="dialog-error" v-if="dialog_err">Error: must enter valid URL</p>
+            <br />
+            <button class="button" type="button" @click="closeDialog">OK</button>
 
+          </dialog>
+          <div class="grid-container ">
+            <div class="grid-x grid-padding-x">
+              <div id="leafletmap" class="cell auto"></div>
+            </div>
+          </div>
+          <div class="cell large-auto" style="background-color: #150347;">
+            <div class="center" >
+            <p class="dialog-error" v-if="pan_err">{{pan_err_msg}}</p>
+              <label for="lat"  style="color: white;">Latitude: </label>
+              <input type="text" id="latInput" name="latInput">
+              <label for="lon"  style="color: white;">Longitude: </label>
+              <input type="text" id="lonInput" name="lonInput">
+              <button id="pan-button" class="button" type="button" @click="goToCoordinates">Go!</button>
+            </div>
+          </div>
+          
+               <!-- `grid-x` represents a row -->
+               <div class="grid-x grid-padding-x">
+                <div class="cell large-auto" style="background-color: #616263;">
+                  
+                  <form @submit="submitNewCrime" class="input-form" >
+                    <div class="center"><b>Report a Crime</b></div>
+                    <label  style="color: white;" for="caseNumber">Case Number:</label>
+                    <input type="text" id="caseNumber" v-model="newCrime.case_number" required>
 
-  <div class="input-form-container">
+                    <label  style="color: white;" for="code">Code:</label>
+                    <input type="text"  id="code" v-model="newCrime.code" required>
 
-    <form @submit="submitNewCrime" class="input-form">
-      <div class="center"><b>Report a Crime</b></div>
-      <label for="caseNumber">Case Number:</label>
-      <input type="text" id="caseNumber" v-model="newCrime.case_number" required>
+                    <label  style="color: white;" for="incident">Incident:</label>
+                    <input type="text" id="incident" v-model="newCrime.incident" required>
 
-      <label for="code">Code:</label>
-      <input type="text"  id="code" v-model="newCrime.code" required>
+                    <label  style="color: white;" for="police_grid">Police Grid:</label>
+                    <input type="text"  id="police_grid" v-model="newCrime.police_grid" required>
 
-      <label for="incident">Incident:</label>
-      <input type="text" id="incident" v-model="newCrime.incident" required>
+                    <label  style="color: white;" for="neighborhood_number">Neighborhood Number:</label>
+                    <input type="number"  id="neightborhood_number" v-model="newCrime.neighborhood_number" required>
 
-      <label for="police_grid">Police Grid:</label>
-      <input type="text"  id="police_grid" v-model="newCrime.police_grid" required>
+                    <label  style="color: white;" for="block">Block:</label>
+                    <input type="text" id="block" v-model="newCrime.block" required>
 
-      <label for="neighborhood_number">Neighborhood Number:</label>
-      <input type="number"  id="neightborhood_number" v-model="newCrime.neighborhood_number" required>
+                    <label  style="color: white;" for="date">Date:</label>
+                    <input type="text" id="date" v-model="newCrime.date" required>
 
-      <label for="block">Block:</label>
-      <input type="text" id="block" v-model="newCrime.block" required>
+                    <label  style="color: white;" for="time">Time:</label>
+                    <input type="text" id="time" v-model="newCrime.time" required>
 
-      <label for="date">Date:</label>
-      <input type="text" id="date" v-model="newCrime.date" required>
+                    <button type="submit" class="submit-button">Submit</button>
+                  </form>
+                </div>
+               </div>
+               
+               <div class="grid-x grid-padding-x" style="display: inline;">
+                      <!-- Incident filter check box -->
+                      <div class="cell small-auto large-12" style="background-color: #000000;">
+                        <div v-if="Object.keys(incidentFilter).length > 0">
+                          <p style="font-weight: bold;">Incident Filter</p>
+                       
+                            <label style="display: inline; color:white; padding:10px;" v-for="(checked, incident) in incidentFilter" :key="incident">
+                              <input type="checkbox" v-model="incidentFilter[incident]" @change="updateFilter" />
+                              {{ incident }}
+                            </label>
+                        
+                        </div>
+                      </div>
+               </div>
 
-      <label for="time">Time:</label>
-      <input type="text" id="time" v-model="newCrime.time" required>
+               <div class="grid-x grid-padding-x" style="display: inline;">
+                      <!-- Neighborhood filter check box -->
+                      <div class="cell small-auto large-12" style="background-color: #040404;">
+                        <div v-if="Object.keys(neighborhoodFilter).length > 0">
+                          <p style="font-weight: bold;">Neighborhood Filter</p>
+                            <label style="display: inline; color:white; padding:10px;" v-for="(checked, neighborhood) in neighborhoodFilter" :key="neighborhood">
+                              <input type="checkbox" v-model="neighborhoodFilter[neighborhood]" @change="updateFilter" />
+                              {{ neighborhood }}
+                            </label>
+                         
+                        </div>
+                      </div>
+               </div>
+               <div class="grid-x grid-padding-x" style="display: inline;">
+                    <!-- Date filters -->
+                    <div class="cell small-auto large-12" style="background-color: #000000;">
+                     
+                        <label for="startDate">Start Date:</label>
+                        <input type="date" id="startDate" v-model="startDate" @input="updateFilter" />
 
-      <button type="submit" class="submit-button">Submit</button>
-    </form>
-  </div>
-
-  <!--Incident filter check box-->
-  <div v-if="Object.keys(incidentFilter).length > 0">
-    <p style="font-weight: bold;">Incident Filter</p>
-    <label style="display: inline; padding:10px;" v-for="(checked, incident) in incidentFilter" :key="incident">
-      <input type="checkbox" v-model="incidentFilter[incident]" @change="updateFilter" />
-      {{ incident }}
-    </label>
-  </div >
-
-  <!--neighborhood filter check box-->
-  <div v-if="Object.keys(neighborhoodFilter).length > 0">
-    <p style="font-weight: bold;">Neighborhood Filter</p>
-    <label style="display: inline; padding:10px;" v-for="(checked, neighborhood) in neighborhoodFilter"
-      :key="neighborhood">
-      <input type="checkbox" v-model="neighborhoodFilter[neighborhood]" @change="updateFilter" />
-      {{ neighborhood }}
-    </label>
-  </div>
-
-  <div>
-    <label for="startDate">Start Date:</label>
-    <input type="date" id="startDate" v-model="startDate" @input="updateFilter" />
-
-    <label for="endDate">End Date:</label>
-    <input type="date" id="endDate" v-model="endDate" @input="updateFilter" />
-
-    
-  </div>
-
-  <div>
-    <div v-if="!isLoading">
-      <h2>Crime Table</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Block</th>
-            <th>Date</th>
-            <th>Time</th>
-            <th>Incident</th>
-            <th>Case Number</th>
-            <th>Neighborhood Number</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="crime in initial_crimes" :key="crime.case_number" :style="{backgroundColor: incidentColor[crime.incident]}">
-            <td>{{ crime.block }}</td>
-            <td>{{ crime.date }}</td>
-            <td>{{ crime.time }}</td>
-            <td>{{ crime.incident }}</td>
-            <td>{{ crime.case_number }}</td>
-            <td>{{ crime.neighborhood_number }}</td>
-            <button id="delete-button" class="button" type="button" @click="deleteRow(crime.case_number)"
-            >Delete</button>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <div v-else>
-      Loading...
-    </div>
+                        <label for="endDate">End Date:</label>
+                        <input type="date" id="endDate" v-model="endDate" @input="updateFilter" />
+                      
+                    </div>
+               </div>
 
 
-  </div>
+               <div class="grid-x grid-padding-x">
+                   <div class="cell small-auto large-12" style="background-color: #121111;">
+                    <div v-if="!isLoading">
+                        <h2>Crime Table</h2>
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Block</th>
+                              <th>Date</th>
+                              <th>Time</th>
+                              <th>Incident</th>
+                              <th>Case Number</th>
+                              <th>Neighborhood Number</th>
+                              <th>Delete</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr v-for="crime in initial_crimes" :key="crime.case_number" :style="{backgroundColor: incidentColor[crime.incident]}">
+                              <td>{{ crime.block }}</td>
+                              <td>{{ crime.date }}</td>
+                              <td>{{ crime.time }}</td>
+                              <td>{{ crime.incident }}</td>
+                              <td>{{ crime.case_number }}</td>
+                              <td>{{ crime.neighborhood_number }}</td>
+                              <button id="delete-button" class="button" type="button" @click="deleteRow(crime.case_number)"
+                              >Delete</button>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div v-else>
+                        Loading...
+                      </div>
+                  </div>
+                 
+               </div>
+           </div>
+       </div>
+   </div>
+
 </template>
 
 <style>
+
+body{
+  background-color: rgb(23, 23, 58);;
+  color: white;
+}
 #rest-dialog {
   width: 20rem;
   margin-top: 1rem;
@@ -590,12 +625,12 @@ function deleteRow(id) {
   margin-top: 5rem;
   margin-left: 5rem;
   padding: 1rem;
+  
 }
 
 .input-form {
   border: solid black 1px;
   padding: 1rem;
-
 }
 
 .submit-button {
@@ -607,6 +642,7 @@ function deleteRow(id) {
 .center {
   display: flex;
   justify-content: center;
+  margin: 10px auto;
   }
 
   .about-project {
