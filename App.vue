@@ -13,11 +13,14 @@ let pan_err_msg = ref("")
 let startDate= ref("")
 let endDate=ref("")
 let maxRows= ref(1000)
-let neighborhoodNames = ref()
-let selectedCrimes = ref([])
+const assualt_icon = ref("https://img.icons8.com/ios-filled/50/robber.png")
+const burglar_icon = ref("https://img.icons8.com/ios-filled/50/000000/robber.png")
+const other_crime_icon = ref("https://img.icons8.com/ios/50/000000/handcuffs.png")
+const police_hat_icon = ref("https://img.icons8.com/ios-filled/50/policeman-male--v1.png")
+
 
 const incidentColor = ref({
-  "Narcotics": "red",
+  "Narcotics": "green",
   "Assualt": "brown",
   "Vandalism": "purple",
   "Theft": "purple",
@@ -32,6 +35,10 @@ const incidentColor = ref({
   "Auto Theft": "purple",
   "Discharge": "green"
 })
+
+const crimeTypes = ref({"Property Crime": ["Vandalism", "Robbery", "Criminal Damage", "Burglary", "Auto Theft"],
+                        "Violent Crime": ["Assualt", "Agg. Assault Dom.", "Simple Assault Dom.", "Agg. Assault"],
+                      "Other Crime" : ["Discharge"]})
 
 let newCrime = ref({
   "case_number": "",
@@ -112,6 +119,30 @@ const neighborhoodFilter = ref({
   "Summit Hill": false,
   "Capitol River": false
 })
+
+var assualtIcon = L.icon({
+  iconUrl: assualt_icon.value,
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+});
+
+var theftIcon = L.icon({
+  iconUrl: burglar_icon.value,
+  iconSize: [30, 30],
+  iconAnchor: [15, 30]
+});
+
+var otherCrimeIcon = L.icon({
+  iconUrl: other_crime_icon.value,
+  iconSize: [30, 30],
+  iconAnchor: [15, 30]
+});
+
+var notCrimeIcon = L.icon({
+  iconUrl: police_hat_icon.value,
+  iconSize: [30, 30],
+  iconAnchor: [15, 30]
+});
 
 let map = reactive(
   {
@@ -207,6 +238,40 @@ onMounted(() => {
   curMapBounds.sw = map.leaflet.getBounds()["_southWest"]
   mapCenter.lat = map.leaflet.getCenter()["lat"]
   mapCenter.lon = map.leaflet.getCenter()["lng"]
+
+  document.addEventListener("add-marker", function(event) {
+
+    const location = event.detail.coordinates
+    const label = event.detail.label
+    const icon = event.detail.markerIcon
+    var crimeMarker = L.marker(location, {icon: icon}).bindTooltip(label).addTo(map.leaflet)
+    goToCoordinates(location[0], location[1])  })
+
+  function goToCoordinates(lat, lon) {
+    if (lat.length == 0) {
+      lat = mapCenter.lat
+    }
+    if (lon.length == 0) {
+      lon = mapCenter.lon
+    }
+    if ((isNaN(lat) || isNaN(lon))) {
+      console.log("Not a number")
+      pan_err_msg.value = "Invalid input"
+      pan_err.value = true
+      return
+    }
+    lat = parseFloat(lat)
+    lon = parseFloat(lon)
+    if (!inRange(lat, map.bounds.se.lat, map.bounds.nw.lat) || !inRange(lon, map.bounds.nw.lng, map.bounds.se.lng)) {
+      console.log("invalid input for " + lat + " " + lon)
+      pan_err_msg.value = "coordinates not in map bounds"
+      pan_err.value = true
+      return
+    }
+    console.log("pan to " +lat + ", " + lon)
+    map.leaflet.panTo([lat, lon])
+    updateMapParams()
+  }
 
   //Map pan function
   document.getElementById("pan-button").addEventListener("click", function goToCoordinates() {
@@ -483,35 +548,6 @@ function getNeighborhoodStats() {
   })
 }
 
-function filterCrimesByMapBounds() {
-  displayed_crimes = initial_crimes.value.forEach((crime) => {
-    const address = crime["block"]
-    console.log(address)
-    const coordinates = getCoordsFromAddress(address).then((response) => {
-      return response
-    })
-    if (inRange(coordinates["lat"], curMapBounds.sw["lat"], curMapBounds.ne["lat"]) &&
-    inRange(coordinates["lon"], curMapBounds.ne["lng"], curMapBounds.sw["lng"])) {
-      return coordinates
-    }
-  })
-  console.log(displayed_crimes)
-}
-
-function setUpNeighborhoodCoords() {
-  const neighborhoodPath = "neighborhoods"
-  neighborhoodNames = fetchData(crime_url.value, neighborhoodPath).then((neighborhoods) => {
-    neighborhoods.forEach((neighborhood) => {
-      const neighborhoodName = neighborhood["name"]
-      const coords = getCoordsFromAddress(neighborhoodName).then((addressInfo) => {
-        return addressInfo
-      })
-      console.log(coords)
-      neighborhood["location"] = coords
-    })
-  })
-}
-
 function filterCrimesByMapPosition() {
   const visibleNeighborhoods = new Set()
   for (let i = 0; i<map.neighborhood_markers.length; i++) {
@@ -538,6 +574,28 @@ function filterCrimesByMapPosition() {
 //        .bindTooltip("Clickable Row!")
 //        .addTo(markerGroup.value);
 //   }
+
+function setCrimeMarker(crime) {
+  let crimeIcon = theftIcon
+  if (incidentColor.value[crime.incident] == "green") {
+    crimeIcon = otherCrimeIcon
+  } if (incidentColor.value[crime.incident] == "lightskyblue") {
+    crimeIcon = notCrimeIcon
+  } if (incidentColor.value[crime.incident] == "brown") {
+    crimeIcon = assualtIcon
+  }
+  console.log(incidentColor.value[crime.incident])
+  console.log(crimeIcon.iconUrl)
+  const markerLabel = `${crime.incident} on ${crime.date} at ${crime.time}`
+  getCoordsFromAddress(crime.block).then((location) => {
+    const coordArray = [location["lat"], location["lon"]]
+    // const crimeInfo = {"location" : coordArray, "color": markerColor, "label": markerLabel}
+    document.dispatchEvent(new CustomEvent("add-marker", {
+      detail: { coordinates: coordArray, label: markerLabel, markerIcon: crimeIcon },
+      bubbles: true
+    }))
+  })
+}
 
 </script>
 
@@ -679,7 +737,7 @@ function filterCrimesByMapPosition() {
                           </thead>
                           <tbody>
                             <tr v-for="crime in displayed_crimes" :key="crime.case_number" :style="{backgroundColor: incidentColor[crime.incident]}" 
-                            id="table-row" @click="">
+                            id="table-row" @click="setCrimeMarker(crime)">
                               <td>{{ crime.block }}</td>
                               <td>{{ crime.date }}</td>
                               <td>{{ crime.time }}</td>
