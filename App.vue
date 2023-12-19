@@ -14,7 +14,7 @@ let startDate= ref("")
 let endDate=ref("")
 let maxRows= ref(1000)
 let neighborhoodNames = ref()
-let markerGroup = ref()
+let selectedCrimes = ref([])
 
 const incidentColor = ref({
   "Narcotics": "red",
@@ -43,6 +43,26 @@ let newCrime = ref({
   "date": "",
   "time": ""
 })
+
+const neighborhoodLocations = ref([
+{id: 1, location : [44.942068, -93.020521]},
+{id: 2, location : [44.977413, -93.025156]},
+ {id: 3, location : [44.956192, -93.060189]},
+ {id: 4, location : [44.978883, -93.068163]},
+ {id: 5, location : [44.975766, -93.113887]},
+ {id: 6, location : [44.959639, -93.121271]},
+ {id: 7, location : [44.947700, -93.128505]},
+ {id: 8, location : [44.930276, -93.119911]},
+ {id: 9, location : [44.930276, -93.119911]},
+ {id: 10, location : [44.982752, -93.147910]},
+ {id: 11, location : [44.963631, -93.167548]},
+ {id: 12, location : [44.973971, -93.197965]},
+ {id: 13, location : [44.949043, -93.178261]},
+ {id: 14, location : [44.934848, -93.176736]},
+ {id: 15, location : [44.913106, -93.170779]},
+ {id: 16, location : [44.937705, -93.136997]},
+ {id: 16, location : [44.949203, -93.093739]}
+])
 
 let neighborhoodCrimes = ref({})
 
@@ -155,8 +175,10 @@ onMounted(() => {
   // })
 
   getNeighborhoodStats().then((stats) => {
+    console.log(stats)
     stats.forEach((stat) => {
-      const location = map.neighborhood_markers[stat["id"]]["location"]
+      console.log(stat)
+      const location = neighborhoodLocations.value[stat["id"] - 1]["location"]
       var marker = L.marker(location)
       .bindTooltip("Crimes: " + stat["crimes"])
       .addTo(markersGroup);
@@ -165,7 +187,7 @@ onMounted(() => {
 
   map.leaflet.on('move', function onDragEnd() {
     updateMapParams()
-    markerGroup.value = markersGroup
+    filterCrimesByMapPosition()
   });
 
   function updateMapParams() {
@@ -185,8 +207,6 @@ onMounted(() => {
   curMapBounds.sw = map.leaflet.getBounds()["_southWest"]
   mapCenter.lat = map.leaflet.getCenter()["lat"]
   mapCenter.lon = map.leaflet.getCenter()["lng"]
-  
-
 
   //Map pan function
   document.getElementById("pan-button").addEventListener("click", function goToCoordinates() {
@@ -264,6 +284,7 @@ function initializeCrimes() {
     })
     .then((result) => {
       initial_crimes.value = result;
+      filterCrimesByMapPosition()
       isLoading.value = false;
     }).catch((err) => {
       console.log(err);
@@ -422,6 +443,7 @@ console.log("_____________________________")
     .then((result) => {
       initial_crimes.value = result;
       console.log(initial_crimes.value);
+      filterCrimesByMapPosition()
     })
     .catch((err) => {
       console.log(err);
@@ -490,14 +512,32 @@ function setUpNeighborhoodCoords() {
   })
 }
 
-function filterCrimesByMapPosition() {}
-
-function createCrimeMarker(crime) {
-  const location = getCoordsFromAddress(crime.block)
-   var marker = L.marker([location["lat"], location["lon"]])
-       .bindTooltip("Clickable Row!")
-       .addTo(markerGroup.value);
+function filterCrimesByMapPosition() {
+  const visibleNeighborhoods = new Set()
+  for (let i = 0; i<map.neighborhood_markers.length; i++) {
+    const center = neighborhoodLocations.value[i]["location"]
+    const lat = center[0]
+    const lon = center[1]
+    if (inRange(lat, curMapBounds.sw["lat"], curMapBounds.ne["lat"]) &&
+    inRange(lon, curMapBounds.ne["lng"], curMapBounds.sw["lng"])) {
+      visibleNeighborhoods.add(i+1)
+    }
   }
+  displayed_crimes = initial_crimes.value.filter((crime) => {
+    return visibleNeighborhoods.has(crime.neighborhood_number)
+  })
+  console.log(displayed_crimes)
+}
+
+// function createCrimeMarker(crime) {
+//   var marker = L.marker([44.942068, -93.020521])
+//        .bindTooltip("Clickable Row!")
+//        .addTo(markerGroup.value);
+//   const location = getCoordsFromAddress(crime.block)
+//    var marker = L.marker([location["lat"], location["lon"]])
+//        .bindTooltip("Clickable Row!")
+//        .addTo(markerGroup.value);
+//   }
 
 </script>
 
@@ -638,8 +678,8 @@ function createCrimeMarker(crime) {
                             </tr>
                           </thead>
                           <tbody>
-                            <tr v-for="crime in initial_crimes" :key="crime.case_number" :style="{backgroundColor: incidentColor[crime.incident]}" 
-                            id="table-row" @click="createCrimeMarker(crime)">
+                            <tr v-for="crime in displayed_crimes" :key="crime.case_number" :style="{backgroundColor: incidentColor[crime.incident]}" 
+                            id="table-row" @click="">
                               <td>{{ crime.block }}</td>
                               <td>{{ crime.date }}</td>
                               <td>{{ crime.time }}</td>
