@@ -3,120 +3,131 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Three Equal Columns</title>
+  <title>About Us</title>
 </head>
-<body>
 
-<div class="container">
-    <div><a href="http://localhost:8001/">Home</a></div><br/>
-    <div class="column">
-        <span style="margin-left:30%;">About Alec
-        </span>
-        <br>
-        <br>
-        <img src="../photos/headshot.jpg" alt="Jackson headshot"  style="margin-left: 15%">
-        <br>
-        <br>
-        <p>
-            Alecs bio
-        </p>
-      </div>
-      <div class="column">
-        <span style="margin-left:30%;">About Prince
-        </span>
-        <br>
-        <br>
-        <img src="../photos/eyes1.jpg" alt="Prince headshot"  style="margin-left: 15%">
-        <br>
-        <br>
-        <p>
-          I am a computer science undergraduate aspiring to become a software engineer post-graduation, I often describe coding as "sweet torture." 
-          Despite the challenges and stress that come with it, the feeling of relief and accomplishment upon solving a problem makes the journey incredibly rewarding
-        </p>
-      </div>
-  <div class="column">
-    <span style="margin-left:30%;">About Jackson
-    </span>
-    <br>
-    <br>
-    <img src="../photos/headshot.jpg" alt="Jackson headshot"  style="margin-left: 15%">
-    <br>
-    <br>
-    <p>
-        I am a computer engineering undergraduate and plan on working as a software engineer
-        after graduation. I have both a computer science and a busniness minor.
-    </p>
-  </div>
-</div>
-<br>
-<br> 
-<div style="margin-left: 2rem">
-    <b>
-        Description of frameworks and APIs used
-    </b>
-    <br>
-    <p>
-        The JavaScript framework Vue 3 was used for the frontend of this project. Node.js was used
-        for the backend / querying the database. The express Node.js framework Express was used to
-        develop our custom API. The public Nominatim API was used by the frontend to search for
-        locations by name and the retrieval of coordinates. This was needed for to render the map
-        properly and update the table as users scroll around on the map.
-    </p>
+    <div class="container">
 
-    <br>
-    <br>
-    <b>
-        Video Demo
-    </b>
-    <br>
-    <br>
-    <b>
-        Six Things That We Learned
-    </b>
+        <div class="off-canvas-wrapper">
 
-    <ol>
-        <li>
-            Vue is reactive. Updating ref.value from the script propogates the change into the template.
-        </li>
-        <li>
-            JSON.stringify() can be used to send an object as the body for a PUT request.
-        </li>
-        <li>
-            Adding forms in Vue is extremely easy and adding the "required" property on an input
-            will result in an error message box appearing on the input if a user trys to submit
-            the form with that input empty.
-        </li>
-    </ol>
-</div>
+            <!-- Your page content lives here -->
+            <div class="off-canvas-content" data-off-canvas-content>
+
+                <!-- Main content within a `grid-container` -->
+                <div class="grid-container">
+
+                    <!-- `grid-x` represents a row -->
+                    <div style="text-align: center;">
+                        <a href="http://localhost:8001/" style="color: red;">Home</a>
+                    </div><br />
+
+                    <div class="grid-x grid-padding-x" style="margin: 0 auto;">
+
+                        <!-- Prince -->
+                        <div class="cell large-auto" style="background-color: #5a5a5a;">
+                          <table style="border: 2px dotted red;">
+                            <tr>
+                                <!-- Column 1 -->
+                                <td style=" padding: 10px;">
+                                    <span class="yellowHeaders" style="text-align: center;">About Alec</span><br/> 
+                                    <img src="../photos/headshot.jpg" alt="Alec headshot" style="width: 100px; height: auto; float: left; padding: 10px;">
+                                    <p>
+                                      I am a computer science undergraduate aspiring to become a software engineer post-graduation.
+                                      I often describe coding as "sweet torture." Despite the challenges and stress that come with it,
+                                      the feeling of relief and accomplishment upon solving a problem makes the journey incredibly rewarding.
+                                  </p>
+                                </td>
+                    
+                                <!-- Column 2 -->
+                                <td style=" padding: 10px;">
+                                  <span class="yellowHeaders" style="text-align: center;">About Prince</span><br/> 
+                                  <img src="../photos/eyes1.jpg" alt="Prince headshot" style="width: 100px; height: auto; float: left; padding: 10px;">
+                                    
+                                    <p>
+                                        I am a computer science undergraduate aspiring to become a software engineer post-graduation.
+                                        I often describe coding as "sweet torture." Despite the challenges and stress that come with it,
+                                        the feeling of relief and accomplishment upon solving a problem makes the journey incredibly rewarding.
+                                    </p>
+                                </td>
+                    
+                                <!-- Column 3 -->
+                                <td style=" padding: 10px;">
+                                  <span class="yellowHeaders" style="text-align: center;">About Jackson</span> <br/> 
+                                  <img src="../photos/headshot.jpg" alt="Jackson headshot" style="width: 100px; height: auto;  float: left; padding: 10px;">
+                                    
+                                    <p>
+                                        I am a computer engineering undergraduate and plan on working as a software engineer after graduation.
+                                        I have both a computer science and a business minor.
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                      
+                  </div>
+
+                  </div>
+
+                      
+                  <div class="grid-x grid-padding-x" style="margin: 5% auto;">
+                    <!-- Description of frameworks and APIs used -->
+                    <div class="cell large-auto" style="color: rgb(255, 255, 255); background-color: #6d6b6b; ">
+                    <div>
+                        <b class="yellowHeaders">Description of frameworks and APIs used</b>
+                        <br>
+                        <p>
+                            The JavaScript framework Vue 3 was used for the frontend of this project. Node.js was used for the backend
+                            / querying the database. The express Node.js framework Express was used to develop our custom API.
+                            The public Nominatim API was used by the frontend to search for locations by name and the retrieval
+                            of coordinates. This was needed to render the map properly and update the table as users scroll around on the map.
+                        </p>
+                        <br>
+                        <b>Video Demo</b>
+                        <br><br>
+                        <b class="yellowHeaders">Six Things That We Learned</b>
+                        <ol>
+                            <li>Vue is reactive. Updating ref.value from the script propogates the change into the template.</li>
+                            <li>JSON.stringify() can be used to send an object as the body for a PUT request.</li>
+                            <li>Adding forms in Vue is extremely easy, and adding the "required" property on an input will result in an error
+                                message box appearing on the input if a user tries to submit the form with that input empty.</li>
+                            <li>It's easier to build a front-end to tally with the backend if the backend is well built or coded.</li>
+                            <li>SQL joins can be very helpful in querying databases. They help make you write less code.</li>
+                        </ol>
+                    </div>
+                  </div>
+                  </div>
 
 
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- include before closing <body> tag -->
+    <script src="js/vendor/jquery.js"></script>
+    <script src="js/vendor/what-input.js"></script>
+    <script src="js/vendor/foundation.js"></script>
+    <script type="application/javascript">
+        $(document).foundation();
+    </script>
 
 </body>
+
 </html>
 
 <style>
     body {
-      margin: 0;
+      margin: 0 auto;
+      background-color: rgb(3, 3, 83);
+      color: white;
       font-family: Arial, sans-serif;
     }
 
-    .container {
-      display: flex;
-    }
-
-    .column {
-      flex: 1;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      border: 1px solid;
-      box-sizing: border-box;
-    }
-
-    .column-center {
-        margin-left: 30%;
-    }
-
-
+.yellowHeaders{
+  color: yellow;
+}
    
   </style>
