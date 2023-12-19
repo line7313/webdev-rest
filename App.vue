@@ -14,9 +14,7 @@ let startDate= ref("")
 let endDate=ref("")
 let maxRows= ref(1000)
 let neighborhoodNames = ref()
-
-var MARKERS_MAX = 4;
-
+let markerGroup = ref()
 
 const incidentColor = ref({
   "Narcotics": "red",
@@ -159,7 +157,6 @@ onMounted(() => {
   getNeighborhoodStats().then((stats) => {
     stats.forEach((stat) => {
       const location = map.neighborhood_markers[stat["id"]]["location"]
-      console.log(location)
       var marker = L.marker(location)
       .bindTooltip("Crimes: " + stat["crimes"])
       .addTo(markersGroup);
@@ -168,6 +165,7 @@ onMounted(() => {
 
   map.leaflet.on('move', function onDragEnd() {
     updateMapParams()
+    markerGroup.value = markersGroup
   });
 
   function updateMapParams() {
@@ -179,8 +177,6 @@ onMounted(() => {
     document.getElementById("lonInput").placeholder = mapCenter.lon
   }
 
-
-
   // Get boundaries for St. Paul neighborhoods
   let district_boundary = new L.geoJson();
 
@@ -189,8 +185,8 @@ onMounted(() => {
   curMapBounds.sw = map.leaflet.getBounds()["_southWest"]
   mapCenter.lat = map.leaflet.getCenter()["lat"]
   mapCenter.lon = map.leaflet.getCenter()["lng"]
-
   
+
 
   //Map pan function
   document.getElementById("pan-button").addEventListener("click", function goToCoordinates() {
@@ -496,6 +492,13 @@ function setUpNeighborhoodCoords() {
 
 function filterCrimesByMapPosition() {}
 
+function createCrimeMarker(crime) {
+  const location = getCoordsFromAddress(crime.block)
+   var marker = L.marker([location["lat"], location["lon"]])
+       .bindTooltip("Clickable Row!")
+       .addTo(markerGroup.value);
+  }
+
 </script>
 
 <template>
@@ -635,7 +638,8 @@ function filterCrimesByMapPosition() {}
                             </tr>
                           </thead>
                           <tbody>
-                            <tr v-for="crime in initial_crimes" :key="crime.case_number" :style="{backgroundColor: incidentColor[crime.incident]}">
+                            <tr v-for="crime in initial_crimes" :key="crime.case_number" :style="{backgroundColor: incidentColor[crime.incident]}" 
+                            id="table-row" @click="createCrimeMarker(crime)">
                               <td>{{ crime.block }}</td>
                               <td>{{ crime.date }}</td>
                               <td>{{ crime.time }}</td>
