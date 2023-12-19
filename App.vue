@@ -5,6 +5,7 @@ let crime_url = ref('http://localhost:8000');
 const nominatim_url = ref('https://nominatim.openstreetmap.org');
 let dialog_err = ref(false);
 let initial_crimes = ref([]);
+let displayed_crimes = ref([]);
 let isLoading = ref(true);
 let agent = ref(navigator.userAgent);
 let pan_err = ref(false)
@@ -12,6 +13,10 @@ let pan_err_msg = ref("")
 let startDate= ref("")
 let endDate=ref("")
 let maxRows= ref(1000)
+let neighborhoodNames = ref()
+
+var MARKERS_MAX = 4;
+
 
 const incidentColor = ref({
   "Narcotics": "red",
@@ -40,6 +45,8 @@ let newCrime = ref({
   "date": "",
   "time": ""
 })
+
+let neighborhoodCrimes = ref({})
 
 let addressGeolocation = ref({})
 
@@ -127,7 +134,10 @@ let map = reactive(
 
 // Vue callback for once <template> HTML has been added to web page
 onMounted(() => {
-  initializeCrimes();
+  // setUpNeighborhoodCoords()
+  initializeCrimes()
+  
+  
 
   // Create Leaflet map (set bounds and valied zoom levels)
   map.leaflet = L.map('leafletmap').setView([map.center.lat, map.center.lng], map.zoom);
@@ -136,17 +146,25 @@ onMounted(() => {
     minZoom: 11,
     maxZoom: 18
   }).addTo(map.leaflet);
+  var markersGroup = L.layerGroup();
+  map.leaflet.addLayer(markersGroup);
   map.leaflet.setMaxBounds([[44.883658, -93.217977], [45.008206, -92.993787]]);
 
-  // map.leaflet.on('move', function onDragEnd(){
-  //   // console.log(map.leaflet.getBounds())
-  //   curMapBounds.ne = map.leaflet.getBounds()["_northEast"]
-  //   curMapBounds.sw = map.leaflet.getBounds()["_southWest"]
-  //   mapCenter.lat = map.leaflet.getCenter()["lat"]
-  //   mapCenter.lon = map.leaflet.getCenter()["lng"]
-  //   document.getElementById("latInput").placeholder = mapCenter.lat
-  //   document.getElementById("lonInput").placeholder = mapCenter.lon
-  //   });
+  // map.neighborhood_markers.forEach((marker) => {
+  //   var marker = L.marker(marker["location"])
+  //   .bindTooltip("Null")
+  //   .addTo(markersGroup);
+  // })
+
+  getNeighborhoodStats().then((stats) => {
+    stats.forEach((stat) => {
+      const location = map.neighborhood_markers[stat["id"]]["location"]
+      console.log(location)
+      var marker = L.marker(location)
+      .bindTooltip("Crimes: " + stat["crimes"])
+      .addTo(markersGroup);
+    })
+  })
 
   map.leaflet.on('move', function onDragEnd() {
     updateMapParams()
@@ -171,6 +189,8 @@ onMounted(() => {
   curMapBounds.sw = map.leaflet.getBounds()["_southWest"]
   mapCenter.lat = map.leaflet.getCenter()["lat"]
   mapCenter.lon = map.leaflet.getCenter()["lng"]
+
+  
 
   //Map pan function
   document.getElementById("pan-button").addEventListener("click", function goToCoordinates() {
@@ -219,21 +239,22 @@ onMounted(() => {
 
 //TODO: replace other fetch functions with this
 function fetchData(url,params) {
-  let requestUrl = `${url.value}/${params}`
+  let requestUrl = `${url}/${params}`
   console.log(requestUrl)
-  return fetch(`${url.value}/${params}`, {
+  return fetch(`${url}/${params}`, {
     headers: {
-      "User-Agent": agent.value,
-      "Email": "krie2910@stthomas.edu"
+      "User-Agent": agent.value
     }
   })
   .then((response) => {
-      console.log(`that it even get hereeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
       return response.json();
-    })  
+    })
+    .then((result) => {
+      console.log(result)
+      return result
+    }).catch((err) => {
+      console.log(err);
+    })
 }
 
 // FUNCTIONS
@@ -252,7 +273,6 @@ function initializeCrimes() {
       console.log(err);
     })
 }
-
 
 function submitNewCrime() {  
   fetch('http://localhost:8000/new-incident', {
@@ -289,24 +309,34 @@ function closeDialog() {
   }
 }
 
+//Queries the nominatim API based on string address
+//Returns a tup;e map {lat : va, lon : val} 
 function getCoordsFromAddress(address) {
   if (address in addressGeolocation) {
     return addressGeolocation[address]
   }
-  let addresString = address  
-  //Two cases: intersection or ananymized street address
+  
+  let addresString = address.trim()
   addresString = addresString.replace(" AND ", " & ")
   let tempList = address.split(" ")
   tempList[0] = tempList[0].replaceAll("X", "0")
   addresString = tempList.join("+")
+
   const queryString = "search.php?q=" + addresString+"+Saint+Paul&format=json&limit=1"
   console.log(queryString)
-  fetchData(nominatim_url, queryString).then((result) => {
-    console.log("result " + result)
-    addressGeolocation[address] = result
+
+  return fetchData(nominatim_url.value, queryString).then((result) => {
+    if (result) {
+      console.log(result[0])
+      const coords = {"lat": result[0]["lat"], "lon": result[0]["lon"]}
+      addressGeolocation[address] = coords
+      return coords
+    }
+    return null
   }).catch((err) => {
       console.log(err);
     });
+
 }
 
 function generateConditions(filters) {
@@ -339,11 +369,8 @@ function generateConditions(filters) {
       conditions.push(condition);
     }
   }
-
   return conditions;
 }
-
-
 
 function inRange(x, min, max) {
     return ((x-min)*(x-max) <= 0);
@@ -427,6 +454,47 @@ function deleteRow(id) {
       updateFilter()
     })
 }
+
+function getNeighborhoodStats() {
+  const url_path = "neighborhood_stats"
+  return fetchData(crime_url.value, url_path).then((response) => {
+    response.forEach((neighborhood) => {
+      neighborhoodCrimes[neighborhood.id] = neighborhood.crimes
+    })
+    return response
+  })
+}
+
+function filterCrimesByMapBounds() {
+  displayed_crimes = initial_crimes.value.forEach((crime) => {
+    const address = crime["block"]
+    console.log(address)
+    const coordinates = getCoordsFromAddress(address).then((response) => {
+      return response
+    })
+    if (inRange(coordinates["lat"], curMapBounds.sw["lat"], curMapBounds.ne["lat"]) &&
+    inRange(coordinates["lon"], curMapBounds.ne["lng"], curMapBounds.sw["lng"])) {
+      return coordinates
+    }
+  })
+  console.log(displayed_crimes)
+}
+
+function setUpNeighborhoodCoords() {
+  const neighborhoodPath = "neighborhoods"
+  neighborhoodNames = fetchData(crime_url.value, neighborhoodPath).then((neighborhoods) => {
+    neighborhoods.forEach((neighborhood) => {
+      const neighborhoodName = neighborhood["name"]
+      const coords = getCoordsFromAddress(neighborhoodName).then((addressInfo) => {
+        return addressInfo
+      })
+      console.log(coords)
+      neighborhood["location"] = coords
+    })
+  })
+}
+
+function filterCrimesByMapPosition() {}
 
 </script>
 
@@ -584,7 +652,6 @@ function deleteRow(id) {
                         Loading...
                       </div>
                   </div>
-                 
                </div>
            </div>
        </div>
