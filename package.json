@@ -12,7 +12,7 @@
     ],
     "repository": {},
     "scripts": {
-        "dev": "vite",
+        "dev": "vite --port 8001",
         "build": "vite build",
         "preview": "vite preview"
     },
