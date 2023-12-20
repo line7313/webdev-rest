@@ -195,7 +195,7 @@ onMounted(() => {
     minZoom: 11,
     maxZoom: 18
   }).addTo(map.leaflet);
-  var markersGroup = L.layerGroup();
+  var markersGroup = self.L.layerGroup();
   map.leaflet.addLayer(markersGroup);
   map.leaflet.setMaxBounds([[44.883658, -93.217977], [45.008206, -92.993787]]);
 
@@ -218,7 +218,7 @@ onMounted(() => {
 
   map.leaflet.on('move', function onDragEnd() {
     updateMapParams()
-    filterCrimesByMapPosition()
+    // filterCrimesByMapPosition()
   });
 
   function updateMapParams() {
@@ -244,7 +244,7 @@ onMounted(() => {
     const location = event.detail.coordinates
     const label = event.detail.label
     const icon = event.detail.markerIcon
-    var crimeMarker = L.marker(location, {icon: icon}).bindTooltip(label).addTo(map.leaflet)
+    L.marker(location, {icon: icon}).bindTooltip(label).addTo(map.leaflet)
     goToCoordinates(location[0], location[1])  })
 
   function goToCoordinates(lat, lon) {
@@ -268,7 +268,6 @@ onMounted(() => {
       pan_err.value = true
       return
     }
-    console.log("pan to " +lat + ", " + lon)
     map.leaflet.panTo([lat, lon])
     updateMapParams()
   }
@@ -436,7 +435,6 @@ function generateConditions(filters) {
     agg_assault: 'Agg. Assault',
     auto_theft: 'Auto Theft',
     discharge: 'Discharge ',
-
   };
 
 
@@ -565,16 +563,6 @@ function filterCrimesByMapPosition() {
   console.log(displayed_crimes)
 }
 
-// function createCrimeMarker(crime) {
-//   var marker = L.marker([44.942068, -93.020521])
-//        .bindTooltip("Clickable Row!")
-//        .addTo(markerGroup.value);
-//   const location = getCoordsFromAddress(crime.block)
-//    var marker = L.marker([location["lat"], location["lon"]])
-//        .bindTooltip("Clickable Row!")
-//        .addTo(markerGroup.value);
-//   }
-
 function setCrimeMarker(crime) {
   let crimeIcon = theftIcon
   if (incidentColor.value[crime.incident] == "green") {
@@ -582,12 +570,14 @@ function setCrimeMarker(crime) {
   } if (incidentColor.value[crime.incident] == "lightskyblue") {
     crimeIcon = notCrimeIcon
   } if (incidentColor.value[crime.incident] == "brown") {
+    console.log("brown")
     crimeIcon = assualtIcon
   }
-  console.log(incidentColor.value[crime.incident])
-  console.log(crimeIcon.iconUrl)
   const markerLabel = `${crime.incident} on ${crime.date} at ${crime.time}`
   getCoordsFromAddress(crime.block).then((location) => {
+    if (!location) {
+      return
+    }
     const coordArray = [location["lat"], location["lon"]]
     // const crimeInfo = {"location" : coordArray, "color": markerColor, "label": markerLabel}
     document.dispatchEvent(new CustomEvent("add-marker", {
@@ -716,6 +706,17 @@ function setCrimeMarker(crime) {
                         <input class="cell" type="number" id="maxRows" v-model="maxRows" @input="updateFilter" />
                         
                     </div>
+               </div>
+
+              <div class="grid-x grid-padding-x" style="display: inline;">
+                <div class="cell small-auto large-3" style="background-color: #000000; color: white;">
+                  <h3>Legend</h3>
+                  <p style="background-color:brown; color: aliceblue;">Violent Crime: Brown</p>
+                  <p style="background-color:purple; color: aliceblue;">Property Crime: Purple</p>
+                  <p style="background-color:green; color: aliceblue;">Other Crime: Green</p>
+                  <p style="background-color:lightskyblue; color: aliceblue;">Non crime events: Light Blue</p>  
+                  <span></span>
+                </div>
                </div>
 
 
