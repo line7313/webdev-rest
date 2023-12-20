@@ -33,7 +33,12 @@ const incidentColor = ref({
   "Community Event": "lightskyblue",
   "Agg. Assault": "brown",
   "Auto Theft": "purple",
-  "Discharge": "green"
+  "Discharge": "green",
+  "Arson" : "purple",
+ "Rape": "brown",
+"Homicide": "brown", 
+"Other":"green",
+"Proactive Foot Patrol": "lightskyblue"
 })
 
 const crimeTypes = ref({"Property Crime": ["Vandalism", "Robbery", "Criminal Damage", "Burglary", "Auto Theft"],
@@ -90,6 +95,11 @@ const incidentFilter = ref({
   Agg_Assault: false,
   Auto_Theft: false,
   Discharge: false,
+  Arson:false,
+ Rape: false,
+Homicide: false, 
+Proactive_Foot_Patrol: false,
+Other: false
 
 });
 
@@ -737,7 +747,7 @@ function setCrimeMarker(crime) {
                             </tr>
                           </thead>
                           <tbody>
-                            <tr v-for="crime in displayed_crimes" :key="crime.case_number" :style="{backgroundColor: incidentColor[crime.incident]}" 
+                            <tr v-for="crime in initial_crimes" :key="crime.case_number" :style="{backgroundColor: incidentColor[crime.incident]}" 
                             id="table-row" @click="setCrimeMarker(crime)">
                               <td>{{ crime.block }}</td>
                               <td>{{ crime.date }}</td>
